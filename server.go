@@ -6,20 +6,18 @@ import (
 	"strings"
 )
 
-func PostServer(w http.ResponseWriter, r *http.Request) {
-	user := strings.TrimPrefix(r.URL.Path, "/users/")
-
-	fmt.Fprint(w, GetUserPost(user))
+type UserServer struct {
+	store UserStore
 }
 
-func GetUserPost(name string) string {
-	if name == "Mark" {
-		return "Hey, how is everybody today?"
-	}
+type UserStore interface {
+	GetUserPost(name string) string
+}
 
-	if name == "Harrison" {
-		return "I am having an awful day..."
-	}
+func (u *UserServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	user := strings.TrimPrefix(r.URL.Path, "/users/")
 
-	return ""
+	w.WriteHeader(http.StatusNotFound)
+
+	fmt.Fprint(w, u.store.GetUserPost(user))
 }

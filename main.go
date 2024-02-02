@@ -5,7 +5,13 @@ import (
 	"net/http"
 )
 
+type InMemoryUserStore struct{}
+
+func (i *InMemoryUserStore) GetUserPost(name string) string {
+	return "hello everybody"
+}
+
 func main() {
-	handler := http.HandlerFunc(PostServer)
-	log.Fatal(":80", handler)
+	server := &UserServer{&InMemoryUserStore{}}
+	log.Fatal(http.ListenAndServe(":80", server))
 }
