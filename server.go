@@ -9,13 +9,17 @@ import (
 func PostServer(w http.ResponseWriter, r *http.Request) {
 	user := strings.TrimPrefix(r.URL.Path, "/users/")
 
-	if user == "Mark" {
-		fmt.Fprint(w, "Hey, how is everybody today?")
-		return
+	fmt.Fprint(w, GetUserPost(user))
+}
+
+func GetUserPost(name string) string {
+	if name == "Mark" {
+		return "Hey, how is everybody today?"
 	}
 
-	if user == "Harrison" {
-		fmt.Fprint(w, "I am having an awful day...")
-		return
+	if name == "Harrison" {
+		return "I am having an awful day..."
 	}
+
+	return ""
 }

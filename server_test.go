@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -8,29 +9,31 @@ import (
 
 func TestGETPosts(t *testing.T) {
 	t.Run("returns Mark's post", func(t *testing.T) {
-		request, _ := http.NewRequest(http.MethodGet, "/users/Mark", nil)
+		request := newGetPostRequest("Mark")
 		response := httptest.NewRecorder()
 
 		PostServer(response, request)
 
-		got := response.Body.String()
-		want := "Hey, how is everybody today?"
-
-		if got != want {
-			t.Errorf("got %q, want %q", got, want)
-		}
+		assertResponseBody(t, response.Body.String(), "Hey, how is everybody today?")
 	})
 	t.Run("returns Harrison's post", func(t *testing.T) {
-		request, _ := http.NewRequest(http.MethodGet, "/users/Harrison", nil)
+		request := newGetPostRequest("Harrison")
 		response := httptest.NewRecorder()
 
 		PostServer(response, request)
 
-		got := response.Body.String()
-		want := "I am having an awful day..."
-
-		if got != want {
-			t.Errorf("got %q, want %q", got, want)
-		}
+		assertResponseBody(t, response.Body.String(), "I am having an awful day...")
 	})
+}
+
+func newGetPostRequest(name string) *http.Request {
+	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/users/%s", name), nil)
+	return req
+}
+
+func assertResponseBody(t testing.TB, got, want string) {
+	t.Helper()
+	if got != want {
+		t.Errorf("response body is wrong, got %q, want %q", got, want)
+	}
 }
