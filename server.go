@@ -17,7 +17,11 @@ type UserStore interface {
 func (u *UserServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	user := strings.TrimPrefix(r.URL.Path, "/users/")
 
-	w.WriteHeader(http.StatusNotFound)
+	post := u.store.GetUserPost(user)
+
+	if post == "" {
+		w.WriteHeader(http.StatusNotFound)
+	}
 
 	fmt.Fprint(w, u.store.GetUserPost(user))
 }
