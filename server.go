@@ -15,6 +15,15 @@ type UserStore interface {
 }
 
 func (u *UserServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodPost:
+		u.savePost(w)
+	case http.MethodGet:
+		u.showPost(w, r)
+	}
+}
+
+func (u *UserServer) showPost(w http.ResponseWriter, r *http.Request) {
 	user := strings.TrimPrefix(r.URL.Path, "/users/")
 
 	post := u.store.GetUserPost(user)
@@ -23,5 +32,9 @@ func (u *UserServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	}
 
-	fmt.Fprint(w, u.store.GetUserPost(user))
+	fmt.Fprint(w, post)
+}
+
+func (u *UserServer) savePost(w http.ResponseWriter) {
+	w.WriteHeader(http.StatusAccepted)
 }
