@@ -11,30 +11,30 @@ type UserServer struct {
 }
 
 type UserStore interface {
-	GetUserPost(name string) string
+	GetUserSqueak(name string) string
 }
 
 func (u *UserServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
-		u.savePost(w)
+		u.saveSqueak(w)
 	case http.MethodGet:
-		u.showPost(w, r)
+		u.showSqueak(w, r)
 	}
 }
 
-func (u *UserServer) showPost(w http.ResponseWriter, r *http.Request) {
+func (u *UserServer) showSqueak(w http.ResponseWriter, r *http.Request) {
 	user := strings.TrimPrefix(r.URL.Path, "/users/")
 
-	post := u.store.GetUserPost(user)
+	squeak := u.store.GetUserSqueak(user)
 
-	if post == "" {
+	if squeak == "" {
 		w.WriteHeader(http.StatusNotFound)
 	}
 
-	fmt.Fprint(w, post)
+	fmt.Fprint(w, squeak)
 }
 
-func (u *UserServer) savePost(w http.ResponseWriter) {
+func (u *UserServer) saveSqueak(w http.ResponseWriter) {
 	w.WriteHeader(http.StatusAccepted)
 }

@@ -7,7 +7,7 @@ import (
 
 type InMemoryUserStore struct{}
 
-func (i *InMemoryUserStore) GetUserPost(name string) string {
+func (i *InMemoryUserStore) GetUserSqueak(name string) string {
 	return "hello everybody"
 }
 

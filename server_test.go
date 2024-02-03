@@ -8,15 +8,15 @@ import (
 )
 
 type StubUserStore struct {
-	posts map[string]string
+	squeaks map[string]string
 }
 
-func (s *StubUserStore) GetUserPost(name string) string {
-	post := s.posts[name]
-	return post
+func (s *StubUserStore) GetUserSqueak(name string) string {
+	squeak := s.squeaks[name]
+	return squeak
 }
 
-func TestGETPosts(t *testing.T) {
+func TestGETSqueaks(t *testing.T) {
 	store := StubUserStore{
 		map[string]string{
 			"Mark":     "Hey, how is everybody today?",
@@ -25,8 +25,8 @@ func TestGETPosts(t *testing.T) {
 	}
 	server := &UserServer{&store}
 
-	t.Run("returns Mark's post", func(t *testing.T) {
-		request := newGetPostRequest("Mark")
+	t.Run("returns Mark's squeak", func(t *testing.T) {
+		request := newGetSqueakRequest("Mark")
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
@@ -35,7 +35,7 @@ func TestGETPosts(t *testing.T) {
 		assertResponseBody(t, response.Body.String(), "Hey, how is everybody today?")
 	})
 	t.Run("returns Harrison's post", func(t *testing.T) {
-		request := newGetPostRequest("Harrison")
+		request := newGetSqueakRequest("Harrison")
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
@@ -44,7 +44,7 @@ func TestGETPosts(t *testing.T) {
 		assertResponseBody(t, response.Body.String(), "I am having an awful day...")
 	})
 	t.Run("returns 404 on missing user", func(t *testing.T) {
-		request := newGetPostRequest("Carrie")
+		request := newGetSqueakRequest("Carrie")
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
@@ -53,7 +53,7 @@ func TestGETPosts(t *testing.T) {
 	})
 }
 
-func newGetPostRequest(name string) *http.Request {
+func newGetSqueakRequest(name string) *http.Request {
 	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/users/%s", name), nil)
 	return req
 }
