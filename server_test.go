@@ -8,6 +8,7 @@ import (
 )
 
 type StubUserStore struct {
+	// Squeaks are Gopher's variant of tweets
 	squeaks map[string]string
 }
 
@@ -34,7 +35,7 @@ func TestGETSqueaks(t *testing.T) {
 		assertStatus(t, response.Code, http.StatusOK)
 		assertResponseBody(t, response.Body.String(), "Hey, how is everybody today?")
 	})
-	t.Run("returns Harrison's post", func(t *testing.T) {
+	t.Run("returns Harrison's squeak", func(t *testing.T) {
 		request := newGetSqueakRequest("Harrison")
 		response := httptest.NewRecorder()
 

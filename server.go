@@ -11,6 +11,7 @@ type UserServer struct {
 }
 
 type UserStore interface {
+	// Squeaks are Gopher's variant of tweets
 	GetUserSqueak(name string) string
 }
 

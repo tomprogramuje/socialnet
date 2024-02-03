@@ -8,6 +8,7 @@ import (
 type InMemoryUserStore struct{}
 
 func (i *InMemoryUserStore) GetUserSqueak(name string) string {
+	// Squeaks are Gopher's variant of tweets
 	return "hello everybody"
 }
 
