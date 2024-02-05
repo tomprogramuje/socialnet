@@ -17,6 +17,20 @@ func (s *StubUserStore) GetUserSqueak(name string) string {
 	return squeak
 }
 
+func TestPOSTSqueaks(t *testing.T) {
+	store := StubUserStore{map[string]string{}}
+	server := &UserServer{&store}
+
+	t.Run("it returns accepted on POST", func(t *testing.T) {
+		request, _ := http.NewRequest(http.MethodPost, "/users/Mark", nil)
+		response := httptest.NewRecorder()
+
+		server.ServeHTTP(response, request)
+
+		assertStatus(t, response.Code, http.StatusAccepted)
+	})
+}
+
 func TestGETSqueaks(t *testing.T) {
 	store := StubUserStore{
 		map[string]string{
@@ -50,7 +64,10 @@ func TestGETSqueaks(t *testing.T) {
 
 		server.ServeHTTP(response, request)
 
-		assertStatus(t, response.Code, http.StatusNotFound)	
+		assertStatus(t, response.Code, http.StatusNotFound)
+	})
+	t.Run("returns Andrew's squeaks", func(t *testing.T) {
+
 	})
 }
 
