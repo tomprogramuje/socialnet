@@ -9,54 +9,95 @@ import (
 
 type StubUserStore struct {
 	// Squeaks are Gopher's variant of tweets
-	squeaks map[string]string
+	squeaks    map[string]int 
+	newSqueaks []string 
 }
 
-func (s *StubUserStore) GetUserSqueak(name string) string {
-	squeak := s.squeaks[name]
-	return squeak
+func (s *StubUserStore) GetUserSqueakCount(name string) int {
+	return s.squeaks[name]
 }
 
-func TestPOSTSqueaks(t *testing.T) {
-	store := StubUserStore{map[string]string{}}
+func (s *StubUserStore) PostSqueak(name string) {
+	s.newSqueaks = append(s.newSqueaks, name)
+}
+
+func TestStoreNewSqueaks(t *testing.T) {
+	store := StubUserStore{
+		map[string]int{},
+		nil,
+	}
 	server := &UserServer{&store}
 
-	t.Run("it returns accepted on POST", func(t *testing.T) {
-		request, _ := http.NewRequest(http.MethodPost, "/users/Mark", nil)
+	t.Run("it records squeaks on POST", func(t *testing.T) {
+		user := "Mark"
+
+		request := newPostSqueakRequest(user)
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
 
 		assertStatus(t, response.Code, http.StatusAccepted)
+
+		if len(store.newSqueaks) != 1 {
+			t.Errorf("got %d calls to RecordSqueak want %d", len(store.newSqueaks), 1)
+		}
+
+		if store.newSqueaks[0] != user {
+			t.Errorf("did not store correct user got %q want %q", store.newSqueaks[0], user)
+		}
 	})
+}
+
+/*func TestPOSTSqueaks(t *testing.T) {
+	store := StubUserStore{map[string]string{}}
+	server := &UserServer{&store}
+
+	t.Run("it saves a new squeak", func(t *testing.T) {
+		request := newPostSqueakRequest("Andrew", "I am C-3PO, human-cyborg relations.")
+		response := httptest.NewRecorder()
+
+		server.ServeHTTP(response, request)
+
+		assertStatus(t, response.Code, http.StatusAccepted)
+
+		if store.squeaks["Andrew"] != "I am C-3PO, human-cyborg relations." {
+			t.Error("did not manage to save the right squeak")
+		}
+	})
+}*/
+
+func newPostSqueakRequest(name string) *http.Request {
+	req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("/users/%s", name), nil)
+	return req
 }
 
 func TestGETSqueaks(t *testing.T) {
 	store := StubUserStore{
-		map[string]string{
-			"Mark":     "Hey, how is everybody today?",
-			"Harrison": "I am having an awful day...",
+		map[string]int{
+			"Mark":     12,
+			"Harrison": 24,
 		},
+		nil,
 	}
 	server := &UserServer{&store}
 
-	t.Run("returns Mark's squeak", func(t *testing.T) {
+	t.Run("returns Mark's squeak count", func(t *testing.T) {
 		request := newGetSqueakRequest("Mark")
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
 
 		assertStatus(t, response.Code, http.StatusOK)
-		assertResponseBody(t, response.Body.String(), "Hey, how is everybody today?")
+		assertResponseBody(t, response.Body.String(), "12")
 	})
-	t.Run("returns Harrison's squeak", func(t *testing.T) {
+	t.Run("returns Harrison's squeak count", func(t *testing.T) {
 		request := newGetSqueakRequest("Harrison")
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
 
 		assertStatus(t, response.Code, http.StatusOK)
-		assertResponseBody(t, response.Body.String(), "I am having an awful day...")
+		assertResponseBody(t, response.Body.String(), "24")
 	})
 	t.Run("returns 404 on missing user", func(t *testing.T) {
 		request := newGetSqueakRequest("Carrie")
