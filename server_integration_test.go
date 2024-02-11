@@ -8,16 +8,31 @@ import (
 
 func TestPostingSqueaksAndRetrievingThem(t *testing.T) {
 	store := NewInMemoryUserStore()
-	server := UserServer{store}
-	user := "Mark"
+	server := NewUserServer(store)
+	user := User{"Mark", []string{"I don't believe it!"}}
+	store.userbase = append(store.userbase, user)
 
-	server.ServeHTTP(httptest.NewRecorder(), newPostSqueakRequest(user))
-	server.ServeHTTP(httptest.NewRecorder(), newPostSqueakRequest(user))
-	server.ServeHTTP(httptest.NewRecorder(), newPostSqueakRequest(user))
+	server.ServeHTTP(httptest.NewRecorder(), newPostSqueakRequest(user.Name))
+	server.ServeHTTP(httptest.NewRecorder(), newPostSqueakRequest(user.Name))
+	server.ServeHTTP(httptest.NewRecorder(), newPostSqueakRequest(user.Name))
 
-	response := httptest.NewRecorder()
-	server.ServeHTTP(response, newGetSqueakRequest(user))
-	assertStatus(t, response.Code, http.StatusOK)
+	t.Run("get squeak count", func(t *testing.T) {
+		response := httptest.NewRecorder()
+		server.ServeHTTP(response, newGetSqueakRequest(user.Name))
+		assertStatus(t, response.Code, http.StatusOK)
 
-	assertResponseBody(t, response.Body.String(), "3")
+		assertResponseBody(t, response.Body.String(), "3")
+	})
+	//t.Run("post to userbase", func(t *testing.T){})
+	t.Run("get userbase", func(t *testing.T) {
+		response := httptest.NewRecorder()
+		server.ServeHTTP(response, newUserbaseRequest())
+		assertStatus(t, response.Code, http.StatusOK)
+
+		got := getUserbaseFromResponse(t, response.Body)
+		want := []User{
+			{"Mark", []string{"I don't believe it!"}},
+		}
+		assertUserbase(t, got, want)
+	})
 }

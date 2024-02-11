@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -8,15 +9,43 @@ import (
 
 type UserServer struct {
 	store UserStore
+	http.Handler
+}
+
+type User struct {
+	Name    string
+	Squeaks []string
+}
+
+func NewUserServer(store UserStore) *UserServer {
+	u := new(UserServer)
+
+	u.store = store
+
+	router := http.NewServeMux()
+	router.Handle("/userbase", http.HandlerFunc(u.userbaseHandler))
+	router.Handle("/users/", http.HandlerFunc(u.usersHandler))
+
+	u.Handler = router
+
+	return u
 }
 
 type UserStore interface {
 	// Squeaks are Gopher's variant of tweets
 	GetUserSqueakCount(name string) int
 	PostSqueak(name string)
+	GetUserbase() []User
 }
 
-func (u *UserServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+const jsonContentType = "application/json"
+
+func (u *UserServer) userbaseHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("content-type", jsonContentType)
+	json.NewEncoder(w).Encode(u.store.GetUserbase())
+}
+
+func (u *UserServer) usersHandler(w http.ResponseWriter, r *http.Request) {
 	user := strings.TrimPrefix(r.URL.Path, "/users/")
 
 	switch r.Method {
