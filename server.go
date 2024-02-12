@@ -49,7 +49,7 @@ func (u *UserServer) usersHandler(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodPost:
-		u.saveSqueak(w, user) // I need to send the squeak somehow, JSON?
+		u.saveSqueak(w, user) 
 	case http.MethodGet:
 		u.showSqueak(w, user)
 	}

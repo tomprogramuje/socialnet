@@ -20,7 +20,7 @@ func TestPostingSqueaksAndRetrievingThem(t *testing.T) {
 		server.ServeHTTP(response, newGetSqueakRequest(user.Name))
 		assertStatus(t, response.Code, http.StatusOK)
 
-		assertResponseBody(t, response.Body.String(), "3")
+		assertResponse(t, response.Body.String(), "3")
 	})
 	//t.Run("post to userbase", func(t *testing.T){})
 	t.Run("get userbase", func(t *testing.T) {

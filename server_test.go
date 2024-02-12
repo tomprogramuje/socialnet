@@ -19,7 +19,6 @@ type StubUserStore struct {
 }
 
 func (s *StubUserStore) GetUserSqueaks(name string) []string {
-	// finish
 	return s.squeaks[name]
 }
 
@@ -128,6 +127,7 @@ func TestUserbase(t *testing.T) {
 		server.ServeHTTP(response, request)
 
 		got := getUserbaseFromResponse(t, response.Body)
+
 		assertStatus(t, response.Code, http.StatusOK)
 		assertUserbase(t, got, wantedUserbase)
 		assertContentType(t, response, jsonContentType)
