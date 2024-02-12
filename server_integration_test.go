@@ -1,15 +1,16 @@
 package main
 
-/*import (
+import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
 func TestPostingSqueaksAndRetrievingThem(t *testing.T) {
-	store := NewInMemoryUserStore()
-	server := NewUserServer(store)
+	testStore := NewInMemoryUserStore()
+	server := NewUserServer(testStore)
 	user := User{"Mark", []string{"I don't believe it!"}}
+	testStore.store["Mark"] = []string{"I don't believe it!"}
 
 	server.ServeHTTP(httptest.NewRecorder(), newPostSqueakRequest(user.Name))
 	server.ServeHTTP(httptest.NewRecorder(), newPostSqueakRequest(user.Name))
@@ -18,9 +19,13 @@ func TestPostingSqueaksAndRetrievingThem(t *testing.T) {
 	t.Run("get squeak count", func(t *testing.T) {
 		response := httptest.NewRecorder()
 		server.ServeHTTP(response, newGetSqueakRequest(user.Name))
+
+		got := getUserSqueaksFromResponse(t, response.Body)
+		want := []string{"I don't believe it!"}
+
+		assertResponse(t, got, want)
 		assertStatus(t, response.Code, http.StatusOK)
 
-		assertResponse(t, response.Body.String(), "3")
 	})
 	//t.Run("post to userbase", func(t *testing.T){})
 	t.Run("get userbase", func(t *testing.T) {
@@ -35,4 +40,3 @@ func TestPostingSqueaksAndRetrievingThem(t *testing.T) {
 		assertUserbase(t, got, want)
 	})
 }
-*/
