@@ -57,6 +57,7 @@ func TestStoreNewSqueaks(t *testing.T) {
 			t.Errorf("did not store correct user got %q want %q", store.newSqueaks[0], user)
 		}
 	})
+	//t.Run("post to userbase", func(t *testing.T){}) - the previous test should probably be just part of this or better yet all storing tests should be part of db_test kit 
 }
 
 func newPostSqueakRequest(name string) *http.Request {
@@ -131,7 +132,6 @@ func TestUserbase(t *testing.T) {
 		assertUserbase(t, got, wantedUserbase)
 		assertContentType(t, response, jsonContentType)
 	})
-	//t.Run("post to userbase", func(t *testing.T){})
 }
 
 func newGetSqueakRequest(name string) *http.Request {
