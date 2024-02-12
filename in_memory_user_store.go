@@ -1,26 +1,30 @@
 package main
 
 func NewInMemoryUserStore() *InMemoryUserStore {
-	return &InMemoryUserStore{map[string]int{}, []User{}}
+	return &InMemoryUserStore{map[string][]string{}}
 }
 
 type InMemoryUserStore struct {
-	store    map[string]int
-	userbase []User
+	store map[string][]string
 }
 
-func (i *InMemoryUserStore) GetUserSqueakCount(name string) int {
-	return i.store[name]
+func (i *InMemoryUserStore) GetUserSqueaks(name string) []string {
+	squeaks, ok := i.store[name]
+	if !ok {
+		return []string{}
+	} 
+	
+	return squeaks
 }
 
 func (i *InMemoryUserStore) PostSqueak(name string) {
-	i.store[name]++
+
 }
 
 func (i *InMemoryUserStore) GetUserbase() []User {
 	var userbase []User
-	for _, users := range i.userbase {
-		userbase = append(userbase, User{users.Name, users.Squeaks})
+	for name, squeaks := range i.store {
+		userbase = append(userbase, User{name, squeaks})
 	}
 	return userbase
 }

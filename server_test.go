@@ -7,17 +7,19 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"slices"
 	"testing"
 )
 
 type StubUserStore struct {
 	// Squeaks are Gopher's variant of tweets
-	squeaks    map[string]int
+	squeaks    map[string][]string
 	newSqueaks []string
 	userbase   []User
 }
 
-func (s *StubUserStore) GetUserSqueakCount(name string) int {
+func (s *StubUserStore) GetUserSqueaks(name string) []string {
+	// finish
 	return s.squeaks[name]
 }
 
@@ -31,7 +33,7 @@ func (s *StubUserStore) GetUserbase() []User {
 
 func TestStoreNewSqueaks(t *testing.T) {
 	store := StubUserStore{
-		map[string]int{},
+		map[string][]string{},
 		nil,
 		nil,
 	}
@@ -64,32 +66,38 @@ func newPostSqueakRequest(name string) *http.Request {
 
 func TestGETSqueaks(t *testing.T) {
 	store := StubUserStore{
-		map[string]int{
-			"Mark":     12,
-			"Harrison": 24,
+		map[string][]string{
+			"Mark":     {"I don't believe it!"},
+			"Harrison": {"Great, kid, don't get cocky.", "Laugh it up, fuzzball!"},
 		},
 		nil,
 		nil,
 	}
 	server := NewUserServer(&store)
 
-	t.Run("returns Mark's squeak count", func(t *testing.T) {
+	t.Run("returns Mark's squeak", func(t *testing.T) {
 		request := newGetSqueakRequest("Mark")
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
 
+		got := getUserSqueaksFromResponse(t, response.Body)
+
 		assertStatus(t, response.Code, http.StatusOK)
-		assertResponseBody(t, response.Body.String(), "12")
+		assertResponse(t, got, []string{"I don't believe it!"})
+		assertContentType(t, response, jsonContentType)
 	})
-	t.Run("returns Harrison's squeak count", func(t *testing.T) {
+	t.Run("returns Harrison's squeaks", func(t *testing.T) {
 		request := newGetSqueakRequest("Harrison")
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
 
+		got := getUserSqueaksFromResponse(t, response.Body)
+
 		assertStatus(t, response.Code, http.StatusOK)
-		assertResponseBody(t, response.Body.String(), "24")
+		assertResponse(t, got, []string{"Great, kid, don't get cocky.", "Laugh it up, fuzzball!"})
+		assertContentType(t, response, jsonContentType)
 	})
 	t.Run("returns 404 on missing user", func(t *testing.T) {
 		request := newGetSqueakRequest("Carrie")
@@ -147,10 +155,21 @@ func getUserbaseFromResponse(t testing.TB, body io.Reader) (userbase []User) {
 	return
 }
 
-func assertResponseBody(t testing.TB, got, want string) {
+func getUserSqueaksFromResponse(t testing.TB, body io.Reader) (userSqueaks []string) {
 	t.Helper()
-	if got != want {
-		t.Errorf("response body is wrong, got %q, want %q", got, want)
+
+	err := json.NewDecoder(body).Decode(&userSqueaks)
+	if err != nil {
+		t.Fatalf("Unable to parse response from server %q into slice of string, '%v'", body, err)
+	}
+
+	return
+}
+
+func assertResponse(t testing.TB, got, want []string) {
+	t.Helper()
+	if !slices.Equal(got, want) {
+		t.Errorf("response is wrong, got %q, want %q", got, want)
 	}
 }
 

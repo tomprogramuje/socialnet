@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
 )
@@ -33,7 +32,7 @@ func NewUserServer(store UserStore) *UserServer {
 
 type UserStore interface {
 	// Squeaks are Gopher's variant of tweets
-	GetUserSqueakCount(name string) int
+	GetUserSqueaks(name string) []string
 	PostSqueak(name string)
 	GetUserbase() []User
 }
@@ -57,13 +56,17 @@ func (u *UserServer) usersHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *UserServer) showSqueak(w http.ResponseWriter, user string) {
-	squeak := u.store.GetUserSqueakCount(user)
-
-	if squeak == 0 {
+	squeaks := u.store.GetUserSqueaks(user)
+	if len(squeaks) == 0 {
 		w.WriteHeader(http.StatusNotFound)
+		return
 	}
 
-	fmt.Fprint(w, squeak)
+	w.Header().Set("Content-Type", jsonContentType)
+	if err := json.NewEncoder(w).Encode(squeaks); err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 }
 
 func (u *UserServer) saveSqueak(w http.ResponseWriter, user string) {
