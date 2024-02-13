@@ -17,7 +17,7 @@ func (i *InMemoryUserStore) GetUserSqueaks(name string) []string {
 	return squeaks
 }
 
-func (i *InMemoryUserStore) PostSqueak(name string) {
+func (i *InMemoryUserStore) PostSqueak(name, squeak string) {
 
 }
 

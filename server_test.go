@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -22,8 +23,8 @@ func (s *StubUserStore) GetUserSqueaks(name string) []string {
 	return s.squeaks[name]
 }
 
-func (s *StubUserStore) PostSqueak(name string) {
-	s.newSqueaks = append(s.newSqueaks, name)
+func (s *StubUserStore) PostSqueak(name, squeak string) {
+	s.squeaks[name] = append(s.squeaks[name], squeak)
 }
 
 func (s *StubUserStore) GetUserbase() []User {
@@ -56,7 +57,23 @@ func TestStoreNewSqueaks(t *testing.T) {
 			t.Errorf("did not store correct user got %q want %q", store.newSqueaks[0], user)
 		}
 	})
-	//t.Run("post to userbase", func(t *testing.T){}) - the previous test should probably be just part of this or better yet all storing tests should be part of db_test kit 
+	t.Run("post to users", func(t *testing.T) {
+		body := []byte(`{
+			"name": "Mark",
+			"squeak": "Let go of your hate."
+		}`)
+
+		request, _ := http.NewRequest(http.MethodPost, "/users/Mark", bytes.NewBuffer(body))
+		response := httptest.NewRecorder()
+
+		server.ServeHTTP(response, request)
+
+		assertStatus(t, response.Code, http.StatusAccepted)
+		
+		if len(store.squeaks["Mark"]) != 1 {
+			t.Errorf("got %d calls to PostSqueak want %d", len(store.squeaks["Mark"]), 1)
+		}
+	}) //- the previous test should probably be just part of this or better yet all storing tests should be part of db_test kit
 }
 
 func newPostSqueakRequest(name string) *http.Request {

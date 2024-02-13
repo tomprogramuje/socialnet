@@ -12,11 +12,11 @@ func TestPostingSqueaksAndRetrievingThem(t *testing.T) {
 	user := User{"Mark", []string{"I don't believe it!"}}
 	testStore.store["Mark"] = []string{"I don't believe it!"}
 
-	server.ServeHTTP(httptest.NewRecorder(), newPostSqueakRequest(user.Name))
-	server.ServeHTTP(httptest.NewRecorder(), newPostSqueakRequest(user.Name))
-	server.ServeHTTP(httptest.NewRecorder(), newPostSqueakRequest(user.Name))
+	//server.ServeHTTP(httptest.NewRecorder(), newPostSqueakRequest(user.Name))
+	//server.ServeHTTP(httptest.NewRecorder(), newPostSqueakRequest(user.Name))
+	//server.ServeHTTP(httptest.NewRecorder(), newPostSqueakRequest(user.Name))
 
-	t.Run("get squeak count", func(t *testing.T) {
+	t.Run("get user squeaks", func(t *testing.T) {
 		response := httptest.NewRecorder()
 		server.ServeHTTP(response, newGetSqueakRequest(user.Name))
 

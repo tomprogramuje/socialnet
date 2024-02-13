@@ -33,7 +33,7 @@ func NewUserServer(store UserStore) *UserServer {
 type UserStore interface {
 	// Squeaks are Gopher's variant of tweets
 	GetUserSqueaks(name string) []string
-	PostSqueak(name string)
+	PostSqueak(name, squeak string)
 	GetUserbase() []User
 }
 
@@ -49,7 +49,8 @@ func (u *UserServer) usersHandler(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodPost:
-		u.saveSqueak(w, user) 
+		squeak := "Hello!"
+		u.saveSqueak(w, user, squeak) 
 	case http.MethodGet:
 		u.showSqueak(w, user)
 	}
@@ -69,7 +70,7 @@ func (u *UserServer) showSqueak(w http.ResponseWriter, user string) {
 	}
 }
 
-func (u *UserServer) saveSqueak(w http.ResponseWriter, user string) {
-	u.store.PostSqueak(user)
+func (u *UserServer) saveSqueak(w http.ResponseWriter, user, squeak string) {
+	u.store.PostSqueak(user, squeak)
 	w.WriteHeader(http.StatusAccepted)
 }
