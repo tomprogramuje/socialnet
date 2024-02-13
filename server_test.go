@@ -39,7 +39,7 @@ func TestStoreNewSqueaks(t *testing.T) {
 	}
 	server := NewUserServer(&store)
 
-	t.Run("it records squeaks on POST", func(t *testing.T) {
+	/*t.Run("it records squeaks on POST", func(t *testing.T) {
 		user := "Mark"
 
 		request := newPostSqueakRequest(user)
@@ -56,11 +56,11 @@ func TestStoreNewSqueaks(t *testing.T) {
 		if store.newSqueaks[0] != user {
 			t.Errorf("did not store correct user got %q want %q", store.newSqueaks[0], user)
 		}
-	})
-	t.Run("post to users", func(t *testing.T) {
+	})*/
+	t.Run("it saves squeak on POST", func(t *testing.T) {
 		body := []byte(`{
 			"name": "Mark",
-			"squeak": "Let go of your hate."
+			"squeaks": ["Let go of your hate."]
 		}`)
 
 		request, _ := http.NewRequest(http.MethodPost, "/users/Mark", bytes.NewBuffer(body))
@@ -69,10 +69,17 @@ func TestStoreNewSqueaks(t *testing.T) {
 		server.ServeHTTP(response, request)
 
 		assertStatus(t, response.Code, http.StatusAccepted)
-		
+
 		if len(store.squeaks["Mark"]) != 1 {
 			t.Errorf("got %d calls to PostSqueak want %d", len(store.squeaks["Mark"]), 1)
 		}
+
+		request = newGetSqueakRequest("Mark")
+		server.ServeHTTP(response, request)
+
+		got := store.GetUserSqueaks("Mark")
+		want := []string{"Let go of your hate."}
+		assertResponse(t, got, want)
 	}) //- the previous test should probably be just part of this or better yet all storing tests should be part of db_test kit
 }
 

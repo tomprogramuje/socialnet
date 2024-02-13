@@ -18,7 +18,12 @@ func (i *InMemoryUserStore) GetUserSqueaks(name string) []string {
 }
 
 func (i *InMemoryUserStore) PostSqueak(name, squeak string) {
-
+	_, ok := i.store[name]
+	if !ok {
+		i.store[name] = []string{squeak}
+	} else {
+		i.store[name] = append(i.store[name], squeak)
+	}
 }
 
 func (i *InMemoryUserStore) GetUserbase() []User {
