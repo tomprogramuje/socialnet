@@ -9,16 +9,26 @@ import (
 func TestPostingSqueaksAndRetrievingThem(t *testing.T) {
 	testStore := NewInMemoryUserStore()
 	server := NewUserServer(testStore)
-	user := User{"Mark", []string{"I don't believe it!"}}
-	testStore.store["Mark"] = []string{"I don't believe it!"}
+	bodyMark := []byte(`
+		{"name": "Mark", "squeaks": ["I don't believe it!"]}
+	`)
 
-	//server.ServeHTTP(httptest.NewRecorder(), newPostSqueakRequest(user.Name))
-	//server.ServeHTTP(httptest.NewRecorder(), newPostSqueakRequest(user.Name))
-	//server.ServeHTTP(httptest.NewRecorder(), newPostSqueakRequest(user.Name))
+	bodyHarrison := []byte(`
+		{"name": "Harrison", "squeaks": ["Great, kid, don't get cocky."]}	
+	`)
 
-	t.Run("get user squeaks", func(t *testing.T) {
+	server.ServeHTTP(httptest.NewRecorder(), newPostSqueakRequest("Mark", bodyMark))
+	server.ServeHTTP(httptest.NewRecorder(), newPostSqueakRequest("Harrison", bodyHarrison))
+
+	bodyHarrison = []byte(`
+		{"name": "Harrison", "squeaks": ["Laugh it up, fuzzball!"]}	
+	`)
+
+	server.ServeHTTP(httptest.NewRecorder(), newPostSqueakRequest("Harrison", bodyHarrison))
+
+	t.Run("get Mark's squeaks", func(t *testing.T) {
 		response := httptest.NewRecorder()
-		server.ServeHTTP(response, newGetSqueakRequest(user.Name))
+		server.ServeHTTP(response, newGetSqueakRequest("Mark"))
 
 		got := getUserSqueaksFromResponse(t, response.Body)
 		want := []string{"I don't believe it!"}
@@ -27,7 +37,7 @@ func TestPostingSqueaksAndRetrievingThem(t *testing.T) {
 		assertStatus(t, response.Code, http.StatusOK)
 
 	})
-	//t.Run("post to userbase", func(t *testing.T){})
+	
 	t.Run("get userbase", func(t *testing.T) {
 		response := httptest.NewRecorder()
 		server.ServeHTTP(response, newUserbaseRequest())
@@ -36,6 +46,7 @@ func TestPostingSqueaksAndRetrievingThem(t *testing.T) {
 		got := getUserbaseFromResponse(t, response.Body)
 		want := []User{
 			{"Mark", []string{"I don't believe it!"}},
+			{"Harrison", []string{"Great, kid, don't get cocky.", "Laugh it up, fuzzball!"}},
 		}
 		assertUserbase(t, got, want)
 	})

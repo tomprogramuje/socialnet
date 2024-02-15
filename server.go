@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
 )
@@ -51,14 +50,11 @@ func (u *UserServer) usersHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
 		var payload User
-		fmt.Println(r.Body)
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 			http.Error(w, "Failed to decode JSON payload", http.StatusBadRequest)
 			return
 		}
-		fmt.Println(payload)
 		squeak := string(payload.Squeaks[0])
-		fmt.Println(squeak)
 		u.saveSqueak(w, user, squeak)
 	case http.MethodGet:
 		u.showSqueak(w, user)

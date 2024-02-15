@@ -15,7 +15,6 @@ import (
 type StubUserStore struct {
 	// Squeaks are Gopher's variant of tweets
 	squeaks    map[string][]string
-	newSqueaks []string
 	userbase   []User
 }
 
@@ -35,35 +34,16 @@ func TestStoreNewSqueaks(t *testing.T) {
 	store := StubUserStore{
 		map[string][]string{},
 		nil,
-		nil,
 	}
 	server := NewUserServer(&store)
 
-	/*t.Run("it records squeaks on POST", func(t *testing.T) {
-		user := "Mark"
-
-		request := newPostSqueakRequest(user)
-		response := httptest.NewRecorder()
-
-		server.ServeHTTP(response, request)
-
-		assertStatus(t, response.Code, http.StatusAccepted)
-
-		if len(store.newSqueaks) != 1 {
-			t.Errorf("got %d calls to RecordSqueak want %d", len(store.newSqueaks), 1)
-		}
-
-		if store.newSqueaks[0] != user {
-			t.Errorf("did not store correct user got %q want %q", store.newSqueaks[0], user)
-		}
-	})*/
 	t.Run("it saves squeak on POST", func(t *testing.T) {
 		body := []byte(`{
 			"name": "Mark",
 			"squeaks": ["Let go of your hate."]
 		}`)
 
-		request, _ := http.NewRequest(http.MethodPost, "/users/Mark", bytes.NewBuffer(body))
+		request := newPostSqueakRequest("Mark", body)
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
@@ -78,13 +58,13 @@ func TestStoreNewSqueaks(t *testing.T) {
 		server.ServeHTTP(response, request)
 
 		got := store.GetUserSqueaks("Mark")
-		want := []string{"Let go of your hate."}
-		assertResponse(t, got, want)
-	}) //- the previous test should probably be just part of this or better yet all storing tests should be part of db_test kit
+
+		assertResponse(t, got, []string{"Let go of your hate."})
+	})
 }
 
-func newPostSqueakRequest(name string) *http.Request {
-	req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("/users/%s", name), nil)
+func newPostSqueakRequest(name string, body []byte) *http.Request {
+	req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("/users/%s", name), bytes.NewBuffer(body))
 	return req
 }
 
@@ -94,7 +74,6 @@ func TestGETSqueaks(t *testing.T) {
 			"Mark":     {"I don't believe it!"},
 			"Harrison": {"Great, kid, don't get cocky.", "Laugh it up, fuzzball!"},
 		},
-		nil,
 		nil,
 	}
 	server := NewUserServer(&store)
@@ -142,7 +121,7 @@ func TestUserbase(t *testing.T) {
 			{"Carrie", []string{"Will somebody get this big walking carpet out of my way?"}},
 		}
 
-		store := StubUserStore{nil, nil, wantedUserbase}
+		store := StubUserStore{nil, wantedUserbase}
 		server := NewUserServer(&store)
 
 		request := newUserbaseRequest()

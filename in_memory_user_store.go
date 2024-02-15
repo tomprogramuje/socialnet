@@ -12,8 +12,8 @@ func (i *InMemoryUserStore) GetUserSqueaks(name string) []string {
 	squeaks, ok := i.store[name]
 	if !ok {
 		return []string{}
-	} 
-	
+	}
+
 	return squeaks
 }
 
