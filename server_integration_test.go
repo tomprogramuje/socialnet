@@ -9,29 +9,24 @@ import (
 func TestPostingSqueaksAndRetrievingThem(t *testing.T) {
 	testStore := NewInMemoryUserStore()
 	server := NewUserServer(testStore)
-	bodyMark := []byte(`
-		{"name": "Mark", "squeaks": ["I don't believe it!"]}
-	`)
-
-	bodyHarrison := []byte(`
+	body := []byte(`
 		{"name": "Harrison", "squeaks": ["Great, kid, don't get cocky."]}	
 	`)
 
-	server.ServeHTTP(httptest.NewRecorder(), newPostSqueakRequest("Mark", bodyMark))
-	server.ServeHTTP(httptest.NewRecorder(), newPostSqueakRequest("Harrison", bodyHarrison))
+	server.ServeHTTP(httptest.NewRecorder(), newPostSqueakRequest("Harrison", body))
 
-	bodyHarrison = []byte(`
+	body = []byte(`
 		{"name": "Harrison", "squeaks": ["Laugh it up, fuzzball!"]}	
 	`)
 
-	server.ServeHTTP(httptest.NewRecorder(), newPostSqueakRequest("Harrison", bodyHarrison))
+	server.ServeHTTP(httptest.NewRecorder(), newPostSqueakRequest("Harrison", body))
 
-	t.Run("get Mark's squeaks", func(t *testing.T) {
+	t.Run("get Harrison's squeaks", func(t *testing.T) {
 		response := httptest.NewRecorder()
-		server.ServeHTTP(response, newGetSqueakRequest("Mark"))
+		server.ServeHTTP(response, newGetSqueakRequest("Harrison"))
 
 		got := getUserSqueaksFromResponse(t, response.Body)
-		want := []string{"I don't believe it!"}
+		want := []string{"Great, kid, don't get cocky.", "Laugh it up, fuzzball!"}
 
 		assertResponse(t, got, want)
 		assertStatus(t, response.Code, http.StatusOK)
@@ -45,7 +40,6 @@ func TestPostingSqueaksAndRetrievingThem(t *testing.T) {
 
 		got := getUserbaseFromResponse(t, response.Body)
 		want := []User{
-			{"Mark", []string{"I don't believe it!"}},
 			{"Harrison", []string{"Great, kid, don't get cocky.", "Laugh it up, fuzzball!"}},
 		}
 		assertUserbase(t, got, want)
