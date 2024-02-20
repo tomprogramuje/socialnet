@@ -45,7 +45,7 @@ func TestStoreNewSqueaks(t *testing.T) {
 
 		request := newPostSqueakRequest("Mark", body)
 		response := httptest.NewRecorder()
-
+	
 		server.ServeHTTP(response, request)
 
 		assertStatus(t, response.Code, http.StatusAccepted)

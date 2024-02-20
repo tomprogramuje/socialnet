@@ -24,7 +24,6 @@ func TestPostingSqueaksAndRetrievingThem(t *testing.T) {
 	t.Run("get Harrison's squeaks", func(t *testing.T) {
 		response := httptest.NewRecorder()
 		server.ServeHTTP(response, newGetSqueakRequest("Harrison"))
-
 		got := getUserSqueaksFromResponse(t, response.Body)
 		want := []string{"Great, kid, don't get cocky.", "Laugh it up, fuzzball!"}
 
@@ -32,7 +31,7 @@ func TestPostingSqueaksAndRetrievingThem(t *testing.T) {
 		assertStatus(t, response.Code, http.StatusOK)
 
 	})
-	
+
 	t.Run("get userbase", func(t *testing.T) {
 		response := httptest.NewRecorder()
 		server.ServeHTTP(response, newUserbaseRequest())
