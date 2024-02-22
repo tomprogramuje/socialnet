@@ -47,12 +47,14 @@ func (u *UserServer) userbaseHandler(w http.ResponseWriter, r *http.Request) {
 func (u *UserServer) showSqueak(w http.ResponseWriter, r *http.Request) {
 	user := r.PathValue("name")
 	squeaks := u.store.GetUserSqueaks(user)
+	
 	if len(squeaks) == 0 {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
 	w.Header().Set("Content-Type", jsonContentType)
+	
 	if err := json.NewEncoder(w).Encode(squeaks); err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -62,11 +64,14 @@ func (u *UserServer) showSqueak(w http.ResponseWriter, r *http.Request) {
 func (u *UserServer) saveSqueak(w http.ResponseWriter, r *http.Request) {
 	user := r.PathValue("name")
 	var payload User
+	
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 		http.Error(w, "Failed to decode JSON payload", http.StatusBadRequest)
 		return
 	}
+	
 	squeak := string(payload.Squeaks[0])
+	
 	u.store.PostSqueak(user, squeak)
 	w.WriteHeader(http.StatusAccepted)
 }
