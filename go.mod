@@ -1,6 +1,6 @@
 module github.com/tomprogramuje/socialNetwork
 
-go 1.21.6
+go 1.22.0
 
 require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
