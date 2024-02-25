@@ -7,6 +7,6 @@ import (
 
 func main() {
 	server := NewUserServer(NewInMemoryUserStore())
-	log.Fatal(http.ListenAndServe(":80", server))
+	log.Fatal(http.ListenAndServe(":8000", server))
 }
 
