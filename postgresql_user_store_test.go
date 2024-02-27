@@ -1,6 +1,8 @@
 package main
 
 import (
+	"database/sql"
+	"log"
 	"testing"
 
 	_ "github.com/lib/pq"
@@ -14,11 +16,14 @@ func TestDatabase(t *testing.T) {
 	if err != nil {
 		t.Errorf("error connecting to database: %v", err)
 	}
-	query := `CREATE TABLE IF NOT EXISTS "user" (
+
+	clearDatabase(db)
+	
+	query := `CREATE TABLE "user" (
 		id SERIAL PRIMARY KEY,
 		name VARCHAR(100) NOT NULL
 	);
-	CREATE TABLE IF NOT EXISTS "squeak" (
+	CREATE TABLE "squeak" (
 		id SERIAL PRIMARY KEY,
 		user_id INT,
 		text VARCHAR(255),
@@ -32,18 +37,26 @@ func TestDatabase(t *testing.T) {
 
 	store := PostgreSQLUserStore{db: db}
 
-	t.Run("creates new User", func(t *testing.T) {
+	t.Run("creates new user", func(t *testing.T) {
 		name := "Mark"
 
 		got := store.CreateUser(db, name)
-		if err != nil {
-			t.Errorf("error creating new User %v", err)
-		}
-
 		want := 1
+
 		if got != want {
 			t.Errorf("got wrong id back, got %d want %d", got, want)
 		}
+	})
+	t.Run("returns user name", func(t *testing.T) {
+		id := 1
+
+		got := store.GetUserByID(db, id)
+		want := "Mark"
+
+		if got != want {
+			t.Errorf("got wrong name back, got %s want %s", got, want)
+		}
+
 	})
 	/*t.Run("stores new squeak", func(t *testing.T) {
 		user := "Mark"
@@ -70,8 +83,11 @@ func TestDatabase(t *testing.T) {
 			t.Errorf("did not get correct reponse, got %s, want %s", got, want)
 		}
 	})*/
-	_, err = db.Exec(`DROP TABLE squeak; DROP TABLE "user";`)
+}
+
+func clearDatabase(db *sql.DB) {
+	_, err := db.Exec(`DROP TABLE squeak; DROP TABLE "user";`)
 	if err != nil {
-		t.Fatalf("error dropping table: %v", err)
+		log.Fatalf("error dropping table: %v", err)
 	}
 }
