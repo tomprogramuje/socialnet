@@ -11,7 +11,7 @@ type PostgreSQLUserStore struct {
 	db *sql.DB
 }
 
-func TestDB(dsName string) (*sql.DB, error) {
+func TestDB(dsName string) *sql.DB {
 
 	db, err := sql.Open("postgres", dsName)
 
@@ -23,7 +23,7 @@ func TestDB(dsName string) (*sql.DB, error) {
 		log.Fatalf("couldn't verify database connection, %v", err)
 	}
 
-	return db, nil
+	return db
 }
 
 func (s *PostgreSQLUserStore) CreateUser(db *sql.DB, name string) int {
