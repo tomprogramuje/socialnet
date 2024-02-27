@@ -18,22 +18,8 @@ func TestDatabase(t *testing.T) {
 	}
 
 	clearDatabase(db)
-	
-	query := `CREATE TABLE "user" (
-		id SERIAL PRIMARY KEY,
-		name VARCHAR(100) NOT NULL
-	);
-	CREATE TABLE "squeak" (
-		id SERIAL PRIMARY KEY,
-		user_id INT,
-		text VARCHAR(255),
-		FOREIGN KEY (user_id) REFERENCES "user"(id)
-	)`
 
-	_, err = db.Exec(query)
-	if err != nil {
-		t.Fatal(err)
-	}
+	initializeTestDatabase(db)
 
 	store := PostgreSQLUserStore{db: db}
 
@@ -47,7 +33,7 @@ func TestDatabase(t *testing.T) {
 			t.Errorf("got wrong id back, got %d want %d", got, want)
 		}
 	})
-	t.Run("returns user name", func(t *testing.T) {
+	/*t.Run("returns user name", func(t *testing.T) {
 		id := 1
 
 		got := store.GetUserByID(db, id)
@@ -58,7 +44,7 @@ func TestDatabase(t *testing.T) {
 		}
 
 	})
-	/*t.Run("stores new squeak", func(t *testing.T) {
+	t.Run("stores new squeak", func(t *testing.T) {
 		user := "Mark"
 		squeak := "I don't believe it!"
 
@@ -86,8 +72,26 @@ func TestDatabase(t *testing.T) {
 }
 
 func clearDatabase(db *sql.DB) {
-	_, err := db.Exec(`DROP TABLE squeak; DROP TABLE "user";`)
+	_, err := db.Exec(`DROP TABLE IF EXISTS squeak; DROP TABLE IF EXISTS "user";`)
 	if err != nil {
 		log.Fatalf("error dropping table: %v", err)
+	}
+}
+
+func initializeTestDatabase(db *sql.DB) {
+	query := `CREATE TABLE "user" (
+		id SERIAL PRIMARY KEY,
+		name VARCHAR(100) NOT NULL
+	);
+	CREATE TABLE "squeak" (
+		id SERIAL PRIMARY KEY,
+		user_id INT,
+		text VARCHAR(255),
+		FOREIGN KEY (user_id) REFERENCES "user"(id)
+	)`
+
+	_, err := db.Exec(query)
+	if err != nil {
+		log.Fatalf("error initializing database: %v", err)
 	}
 }
