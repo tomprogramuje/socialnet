@@ -7,7 +7,9 @@ import (
 	_ "github.com/lib/pq"
 )
 
-type PostgreSQLUserStore struct{}
+type PostgreSQLUserStore struct{
+	db *sql.DB
+}
 
 func TestDB(dsName string) (*sql.DB, error) {
 
@@ -32,3 +34,5 @@ func (s *PostgreSQLUserStore) PostSqueak(name, squeak string) error {
 func (s *PostgreSQLUserStore) GetUserSqueaks(name string) []string {
 	return nil
 }
+
+func (s *PostgreSQLUserStore) GetUserbase() {}
