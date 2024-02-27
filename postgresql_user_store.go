@@ -7,7 +7,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-type PostgreSQLUserStore struct{
+type PostgreSQLUserStore struct {
 	db *sql.DB
 }
 
@@ -26,9 +26,22 @@ func TestDB(dsName string) (*sql.DB, error) {
 	return db, nil
 }
 
-func (s *PostgreSQLUserStore) PostSqueak(name, squeak string) error {
-	
-	return nil
+func (s *PostgreSQLUserStore) CreateUser(db *sql.DB, name string) int {
+	query := `INSERT INTO "user" (name)
+	VALUES ($1) RETURNING id`
+
+	var pk int
+	err := db.QueryRow(query, name).Scan(&pk)
+	if err != nil {
+		log.Fatal(err)
+		return -1
+	}
+	return pk
+}
+
+func (s *PostgreSQLUserStore) PostSqueak(name, squeak string) (int, error) {
+	//query := `INSERT INTO squeak ()`
+	return 0, nil
 }
 
 func (s *PostgreSQLUserStore) GetUserSqueaks(name string) []string {

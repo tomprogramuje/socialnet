@@ -22,8 +22,9 @@ func (s *StubUserStore) GetUserSqueaks(name string) []string {
 	return s.squeaks[name]
 }
 
-func (s *StubUserStore) PostSqueak(name, squeak string) {
+func (s *StubUserStore) PostSqueak(name, squeak string) (int, error) {
 	s.squeaks[name] = append(s.squeaks[name], squeak)
+	return 0, nil
 }
 
 func (s *StubUserStore) GetUserbase() []User {
