@@ -14,7 +14,7 @@ func TestDatabase(t *testing.T) {
 	if err != nil {
 		t.Errorf("error connecting to database: %v", err)
 	}
-	query := `CREATE TABLE IF NOT EXISTS testUser (
+	query := `CREATE TABLE IF NOT EXISTS test_user (
 		id SERIAL PRIMARY KEY,
 		name VARCHAR(100) NOT NULL
 	)`
@@ -46,7 +46,7 @@ func TestDatabase(t *testing.T) {
 		}
 	})*/
 
-	_, err = db.Exec("DROP TABLE IF EXISTS testUser")
+	_, err = db.Exec("DROP TABLE IF EXISTS test_user")
 	if err != nil {
 		t.Fatalf("error dropping table: %v", err)
 	}
