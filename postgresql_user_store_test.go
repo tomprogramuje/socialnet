@@ -33,7 +33,7 @@ func TestDatabase(t *testing.T) {
 			t.Errorf("got wrong id back, got %d want %d", got, want)
 		}
 	})
-	/*t.Run("returns user name", func(t *testing.T) {
+	t.Run("returns user name", func(t *testing.T) {
 		id := 1
 
 		got := store.GetUserByID(db, id)
@@ -44,7 +44,7 @@ func TestDatabase(t *testing.T) {
 		}
 
 	})
-	t.Run("stores new squeak", func(t *testing.T) {
+	/*t.Run("stores new squeak", func(t *testing.T) {
 		user := "Mark"
 		squeak := "I don't believe it!"
 

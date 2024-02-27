@@ -40,21 +40,6 @@ func (s *PostgreSQLUserStore) CreateUser(db *sql.DB, name string) int {
 	return pk
 }
 
-func (s *PostgreSQLUserStore) GetUserByID(db *sql.DB, id int) string {
-	query := `SELECT name
-	IN "user"
-	WHERE id = $1
-	`
-
-	var name string
-	err := db.QueryRow(query, id).Scan(&name)
-	if err != nil {
-		log.Fatal(err)
-		return "User not found"
-	}
-	
-	return name
-}
 
 func (s *PostgreSQLUserStore) PostSqueak(name, squeak string) (int, error) {
 	//query := `INSERT INTO squeak ()`
