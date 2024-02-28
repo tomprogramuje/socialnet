@@ -13,7 +13,7 @@ const connStrTest = "postgres://postgres:1234@localhost:5432/test?sslmode=disabl
 
 func TestDatabase(t *testing.T) {
 
-	db := TestDB(connStrTest)
+	db := NewPostgreSQLUserStore(connStrTest)
 	clearDatabase(db)
 	initializeTestDatabase(db)
 

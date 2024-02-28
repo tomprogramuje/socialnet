@@ -12,7 +12,7 @@ type PostgreSQLUserStore struct {
 	db *sql.DB
 }
 
-func TestDB(dsName string) *sql.DB {
+func NewPostgreSQLUserStore(dsName string) *sql.DB {
 
 	db, err := sql.Open("postgres", dsName)
 
