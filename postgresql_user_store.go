@@ -49,8 +49,7 @@ func (s *PostgreSQLUserStore) GetUserByID(db *sql.DB, id int) string {
 	var name string
 	err := db.QueryRow(query, id).Scan(&name)
 	if err != nil {
-		log.Fatal(err)
-	
+		return "User not found"
 	}
 
 	return name
