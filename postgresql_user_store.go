@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 
 	_ "github.com/lib/pq"
@@ -88,31 +89,27 @@ func (s *PostgreSQLUserStore) PostSqueak(name, squeak string) int {
 
 func (s *PostgreSQLUserStore) GetUserSqueaks(name string) []string {
 	user_id := s.GetUserByName(name)
-	query := `SELECT text
-	FROM squeak
-	WHERE user_id = $1
-	`
+	query := `SELECT text FROM squeak WHERE user_id = $1`
 
 	var squeaks []string
 	rows, err := s.db.Query(query, user_id)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil
-		}
 		log.Fatal(err)
 	}
 
 	defer rows.Close()
 
 	var squeak string
-
 	for rows.Next() {
 		err := rows.Scan(&squeak)
 		if err != nil {
 			log.Fatal(err)
 		}
-		
 		squeaks = append(squeaks, squeak)
+	}
+
+	if len(squeaks) == 0 {
+		return []string{fmt.Sprintf("No squeaks found for %s", name)}
 	}
 
 	return squeaks
