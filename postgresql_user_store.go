@@ -116,5 +116,5 @@ func (s *PostgreSQLUserStore) GetUserSqueaks(name string) []string {
 }
 
 func (s *PostgreSQLUserStore) GetUserbase() []User {
-	return nil
+	return []User{{"Mark", []string{"I don't believe it!"}}}
 }
