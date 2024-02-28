@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"log"
+	"reflect"
 	"slices"
 	"testing"
 
@@ -91,6 +92,14 @@ func TestDatabase(t *testing.T) {
 
 		if !slices.Equal(got, want) {
 			t.Errorf("did not get correct response, got %s, want %s", got, want)
+		}
+	})
+	t.Run("returns the userbase", func(t *testing.T) {
+		got := store.GetUserbase()
+		want := []User{{"Mark", []string{"I don't believe it!"}}}
+
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("got %v want %v", got, want)
 		}
 	})
 }

@@ -115,4 +115,6 @@ func (s *PostgreSQLUserStore) GetUserSqueaks(name string) []string {
 	return squeaks
 }
 
-func (s *PostgreSQLUserStore) GetUserbase() {}
+func (s *PostgreSQLUserStore) GetUserbase() []User {
+	return nil
+}
