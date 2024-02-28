@@ -14,11 +14,11 @@ const connStrTest = "postgres://postgres:1234@localhost:5432/test?sslmode=disabl
 
 func TestDatabase(t *testing.T) {
 
-	db := NewPostgreSQLUserStore(connStrTest)
+	db := NewPostgreSQLConnection(connStrTest)
 	clearDatabase(db)
 	initializeTestDatabase(db)
 
-	store := PostgreSQLUserStore{db: db}
+	store := NewPostgreSQLUserStore(db)
 
 	t.Run("creates new user", func(t *testing.T) {
 		name := "Mark"
@@ -94,11 +94,19 @@ func TestDatabase(t *testing.T) {
 			t.Errorf("did not get correct response, got %s, want %s", got, want)
 		}
 	})
-	t.Run("returns the userbase", func(t *testing.T) {
-		got := store.GetUserbase()
-		want := []User{{"Mark", []string{"I don't believe it!"}}}
+	t.Run("stores a squeak for Harrison and returns the userbase", func(t *testing.T) {
+		name := "Harrison"
+		squeak := "Great, kid, don't get cocky."
 
-		if !reflect.DeepEqual(got, want) {
+		store.PostSqueak(name, squeak)
+
+		got := store.GetUserbase()
+		want := []User{
+			{"Mark", []string{"I don't believe it!"}},
+			{"Harrison", []string{"Great, kid, don't get cocky."}},
+		}
+
+		if !reflect.DeepEqual(got, want) { // try slices.Equal()
 			t.Errorf("got %v want %v", got, want)
 		}
 	})

@@ -12,7 +12,11 @@ type PostgreSQLUserStore struct {
 	db *sql.DB
 }
 
-func NewPostgreSQLUserStore(dsName string) *sql.DB {
+func NewPostgreSQLUserStore(db *sql.DB) *PostgreSQLUserStore {
+	return &PostgreSQLUserStore{db: db}
+}
+
+func NewPostgreSQLConnection(dsName string) *sql.DB {
 
 	db, err := sql.Open("postgres", dsName)
 
@@ -116,5 +120,12 @@ func (s *PostgreSQLUserStore) GetUserSqueaks(name string) []string {
 }
 
 func (s *PostgreSQLUserStore) GetUserbase() []User {
+	// iterating through all the users in db
+	// then iterate through all the squeaks of the specific user 
+	// pass the data to User struct 
+	// return a slice of all User structs
+	//s.GetUserByID(id int)
+	
+	
 	return []User{{"Mark", []string{"I don't believe it!"}}}
 }
