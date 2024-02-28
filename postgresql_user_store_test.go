@@ -39,6 +39,16 @@ func TestDatabase(t *testing.T) {
 		}
 
 	})
+	t.Run("returns not found for nonexisting user", func(t *testing.T) {
+		id := 2 
+
+		got := store.GetUserByID(db, id)
+		want := "User not found"
+
+		if got != want {
+			t.Errorf("got %s back, but wanted %s", got, want)
+		}
+	})
 	/*t.Run("stores new squeak", func(t *testing.T) {
 		user := "Mark"
 		squeak := "I don't believe it!"
