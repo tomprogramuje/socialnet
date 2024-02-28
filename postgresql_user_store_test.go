@@ -21,7 +21,7 @@ func TestDatabase(t *testing.T) {
 	t.Run("creates new user", func(t *testing.T) {
 		name := "Mark"
 
-		got := store.CreateUser(db, name)
+		got := store.CreateUser(name)
 		want := 1
 
 		if got != want {
@@ -31,7 +31,7 @@ func TestDatabase(t *testing.T) {
 	t.Run("returns user name", func(t *testing.T) {
 		id := 1
 
-		got := store.GetUserByID(db, id)
+		got := store.GetUserByID(id)
 		want := "Mark"
 
 		if got != want {
@@ -42,7 +42,7 @@ func TestDatabase(t *testing.T) {
 	t.Run("returns not found for nonexisting user", func(t *testing.T) {
 		id := 2
 
-		got := store.GetUserByID(db, id)
+		got := store.GetUserByID(id)
 		want := "User not found"
 
 		if got != want {
@@ -52,7 +52,7 @@ func TestDatabase(t *testing.T) {
 	t.Run("returns user id", func(t *testing.T) {
 		name := "Mark"
 
-		got := store.GetUserByName(db, name)
+		got := store.GetUserByName(name)
 		want := 1
 
 		if got != want {

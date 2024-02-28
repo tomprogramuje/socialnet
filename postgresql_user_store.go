@@ -26,12 +26,12 @@ func TestDB(dsName string) *sql.DB {
 	return db
 }
 
-func (s *PostgreSQLUserStore) CreateUser(db *sql.DB, name string) int {
+func (s *PostgreSQLUserStore) CreateUser(name string) int {
 	query := `INSERT INTO "user" (name)
 	VALUES ($1) RETURNING id`
 
 	var pk int
-	err := db.QueryRow(query, name).Scan(&pk)
+	err := s.db.QueryRow(query, name).Scan(&pk)
 	if err != nil {
 		return -1
 	}
@@ -39,14 +39,14 @@ func (s *PostgreSQLUserStore) CreateUser(db *sql.DB, name string) int {
 	return pk
 }
 
-func (s *PostgreSQLUserStore) GetUserByID(db *sql.DB, id int) string {
+func (s *PostgreSQLUserStore) GetUserByID(id int) string {
 	query := `SELECT name
 	FROM "user"
 	WHERE id = $1
 	`
 
 	var name string
-	err := db.QueryRow(query, id).Scan(&name)
+	err := s.db.QueryRow(query, id).Scan(&name)
 	if err != nil {
 		return "User not found"
 	}
@@ -54,14 +54,14 @@ func (s *PostgreSQLUserStore) GetUserByID(db *sql.DB, id int) string {
 	return name
 }
 
-func (s *PostgreSQLUserStore) GetUserByName(db *sql.DB, name string) int {
+func (s *PostgreSQLUserStore) GetUserByName(name string) int {
 	query := `SELECT id
 	FROM "user"
 	WHERE name = $1
 	`
 
 	var id int
-	err := db.QueryRow(query, name).Scan(&id)
+	err := s.db.QueryRow(query, name).Scan(&id)
 	if err != nil {
 		return -1
 	}
@@ -70,8 +70,17 @@ func (s *PostgreSQLUserStore) GetUserByName(db *sql.DB, name string) int {
 }
 
 func (s *PostgreSQLUserStore) PostSqueak(name, squeak string) int {
-	//query := `INSERT INTO squeak ()`
-	return 0
+	user_id := s.GetUserByName(name)
+	query := `INSERT INTO squeak (user_id, text)
+	VALUES ($1, $2) RETURNING id`
+
+	var id int
+	err := s.db.QueryRow(query, user_id, squeak).Scan(&id)
+	if err != nil {
+		return -1
+	}
+
+	return id
 }
 
 func (s *PostgreSQLUserStore) GetUserSqueaks(name string) []string {
