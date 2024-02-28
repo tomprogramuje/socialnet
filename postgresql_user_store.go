@@ -63,7 +63,10 @@ func (s *PostgreSQLUserStore) GetUserByName(name string) int {
 	var id int
 	err := s.db.QueryRow(query, name).Scan(&id)
 	if err != nil {
-		return -1
+		if err == sql.ErrNoRows {
+			return -1
+		}
+		log.Fatal(err)
 	}
 
 	return id
@@ -93,7 +96,10 @@ func (s *PostgreSQLUserStore) GetUserSqueaks(name string) []string {
 	var squeaks []string
 	rows, err := s.db.Query(query, user_id)
 	if err != nil {
-		return nil
+		if err == sql.ErrNoRows {
+			return nil
+		}
+		log.Fatal(err)
 	}
 
 	defer rows.Close()
