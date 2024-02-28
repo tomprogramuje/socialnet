@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"log"
+	"slices"
 	"testing"
 
 	_ "github.com/lib/pq"
@@ -71,7 +72,7 @@ func TestDatabase(t *testing.T) {
 			t.Errorf("got wrong id back, got %d want %d", got, want)
 		}
 	})
-	/*t.Run("get user squeak", func(t *testing.T) {
+	t.Run("get user squeak", func(t *testing.T) {
 		user := "Mark"
 
 		got := store.GetUserSqueaks(user)
@@ -80,7 +81,7 @@ func TestDatabase(t *testing.T) {
 		if !slices.Equal(got, want) {
 			t.Errorf("did not get correct reponse, got %s, want %s", got, want)
 		}
-	})*/
+	})
 }
 
 func clearDatabase(db *sql.DB) {

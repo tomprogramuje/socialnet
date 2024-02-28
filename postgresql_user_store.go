@@ -84,7 +84,32 @@ func (s *PostgreSQLUserStore) PostSqueak(name, squeak string) int {
 }
 
 func (s *PostgreSQLUserStore) GetUserSqueaks(name string) []string {
-	return nil
+	user_id := s.GetUserByName(name)
+	query := `SELECT text
+	FROM squeak
+	WHERE user_id = $1
+	`
+
+	var squeaks []string
+	rows, err := s.db.Query(query, user_id)
+	if err != nil {
+		return nil
+	}
+
+	defer rows.Close()
+
+	var squeak string
+
+	for rows.Next() {
+		err := rows.Scan(&squeak)
+		if err != nil {
+			log.Fatal(err)
+		}
+		
+		squeaks = append(squeaks, squeak)
+	}
+
+	return squeaks
 }
 
 func (s *PostgreSQLUserStore) GetUserbase() {}
