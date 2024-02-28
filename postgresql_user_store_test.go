@@ -82,6 +82,17 @@ func TestDatabase(t *testing.T) {
 			t.Errorf("did not get correct reponse, got %s, want %s", got, want)
 		}
 	})
+	t.Run("fetching squeaks for user with no stored squeaks", func(t *testing.T) {
+		name := "Harrison"
+		store.CreateUser(name)
+
+		got := store.GetUserSqueaks(name)
+		want := []string{"No squeaks found for Harrison"}
+
+		if !slices.Equal(got, want) {
+			t.Errorf("did not get correct response, got %s, want %s", got, want)
+		}
+	})
 }
 
 func clearDatabase(db *sql.DB) {
