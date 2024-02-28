@@ -55,9 +55,9 @@ func (s *PostgreSQLUserStore) GetUserByID(db *sql.DB, id int) string {
 	return name
 }
 
-func (s *PostgreSQLUserStore) PostSqueak(name, squeak string) (int, error) {
+func (s *PostgreSQLUserStore) PostSqueak(name, squeak string) int {
 	//query := `INSERT INTO squeak ()`
-	return 0, nil
+	return 0
 }
 
 func (s *PostgreSQLUserStore) GetUserSqueaks(name string) []string {

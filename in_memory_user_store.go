@@ -17,14 +17,14 @@ func (i *InMemoryUserStore) GetUserSqueaks(name string) []string {
 	return squeaks
 }
 
-func (i *InMemoryUserStore) PostSqueak(name, squeak string) (int, error) {
+func (i *InMemoryUserStore) PostSqueak(name, squeak string) int {
 	_, ok := i.store[name]
 	if !ok {
 		i.store[name] = []string{squeak}
-		return 0, nil
+		return 0
 	} else {
 		i.store[name] = append(i.store[name], squeak)
-		return 1, nil
+		return 1
 	}
 }
 

@@ -33,7 +33,7 @@ func NewUserServer(store UserStore) *UserServer {
 type UserStore interface {
 	// Squeaks are Gopher's variant of tweets
 	GetUserSqueaks(name string) []string
-	PostSqueak(name, squeak string) (int, error)
+	PostSqueak(name, squeak string) int
 	GetUserbase() []User
 }
 

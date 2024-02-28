@@ -40,7 +40,7 @@ func TestDatabase(t *testing.T) {
 
 	})
 	t.Run("returns not found for nonexisting user", func(t *testing.T) {
-		id := 2 
+		id := 2
 
 		got := store.GetUserByID(db, id)
 		want := "User not found"
@@ -49,14 +49,21 @@ func TestDatabase(t *testing.T) {
 			t.Errorf("got %s back, but wanted %s", got, want)
 		}
 	})
+	t.Run("returns user id", func(t *testing.T) {
+		name := "Mark"
+
+		got := store.GetUserByName(db, name)
+		want := 1
+
+		if got != want {
+			t.Errorf("got wrong id back, got %d, want %d", got, want)
+		}
+	})
 	/*t.Run("stores new squeak", func(t *testing.T) {
-		user := "Mark"
+		name := "Mark"
 		squeak := "I don't believe it!"
 
-		got, err := store.PostSqueak(user, squeak)
-		if err != nil {
-			t.Error("error inserting data into database", err)
-		}
+		got := store.PostSqueak(name, squeak)
 
 		want := 1
 
