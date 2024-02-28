@@ -33,7 +33,6 @@ func (s *PostgreSQLUserStore) CreateUser(db *sql.DB, name string) int {
 	var pk int
 	err := db.QueryRow(query, name).Scan(&pk)
 	if err != nil {
-		log.Fatal(err)
 		return -1
 	}
 
@@ -56,7 +55,18 @@ func (s *PostgreSQLUserStore) GetUserByID(db *sql.DB, id int) string {
 }
 
 func (s *PostgreSQLUserStore) GetUserByName(db *sql.DB, name string) int {
-	return 0
+	query := `SELECT id
+	FROM "user"
+	WHERE name = $1
+	`
+
+	var id int
+	err := db.QueryRow(query, name).Scan(&id)
+	if err != nil {
+		return -1
+	}
+
+	return id
 }
 
 func (s *PostgreSQLUserStore) PostSqueak(name, squeak string) int {
