@@ -35,13 +35,13 @@ func (s *PostgreSQLUserStore) CreateUser(name string) int {
 	query := `INSERT INTO "user" (name)
 	VALUES ($1) RETURNING id`
 
-	var pk int
-	err := s.db.QueryRow(query, name).Scan(&pk)
+	var id int
+	err := s.db.QueryRow(query, name).Scan(&id)
 	if err != nil {
 		return -1
 	}
 
-	return pk
+	return id
 }
 
 func (s *PostgreSQLUserStore) GetUserByID(id int) string {
@@ -53,7 +53,7 @@ func (s *PostgreSQLUserStore) GetUserByID(id int) string {
 	var name string
 	err := s.db.QueryRow(query, id).Scan(&name)
 	if err != nil {
-		return "User not found"
+		return "User not found" // shouldnť check for sql.ErrNoRows?
 	}
 
 	return name
@@ -97,7 +97,7 @@ func (s *PostgreSQLUserStore) GetUserSqueaks(name string) []string {
 
 	var squeaks []string
 	rows, err := s.db.Query(query, user_id)
-	if err != nil {
+	if err != nil { // shouldnť check for sql.ErrNoRows?
 		log.Fatal(err)
 	}
 
@@ -120,12 +120,29 @@ func (s *PostgreSQLUserStore) GetUserSqueaks(name string) []string {
 }
 
 func (s *PostgreSQLUserStore) GetUserbase() []User {
-	// iterating through all the users in db
-	// then iterate through all the squeaks of the specific user 
-	// pass the data to User struct 
-	// return a slice of all User structs
-	//s.GetUserByID(id int)
-	
-	
-	return []User{{"Mark", []string{"I don't believe it!"}}}
+	query := `SELECT name, text 
+	FROM "user" u
+	JOIN "squeak" s 
+	ON u.id = s.user_id
+	ORDER BY u.id;`
+
+	rows, err := s.db.Query(query)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil
+		}
+		log.Fatal(err)
+	}
+
+	var userbase []User
+	for rows.Next() {
+		var name, squeak string
+		if err := rows.Scan(&name, &squeak); err != nil {
+			log.Fatal(err)
+		}
+		user := &User{Name: name, Squeaks: []string{squeak}}
+		userbase = append(userbase, *user)
+	}
+
+	return userbase
 }
