@@ -94,16 +94,18 @@ func TestDatabase(t *testing.T) {
 			t.Errorf("did not get correct response, got %s, want %s", got, want)
 		}
 	})
-	t.Run("stores a squeak for Harrison and returns the userbase", func(t *testing.T) {
+	t.Run("stores squeaks for Harrison and returns the userbase", func(t *testing.T) {
 		name := "Harrison"
 		squeak := "Great, kid, don't get cocky."
+		store.PostSqueak(name, squeak)
 
+		squeak = "Laugh it up, fuzzball!"
 		store.PostSqueak(name, squeak)
 
 		got := store.GetUserbase()
 		want := []User{
 			{"Mark", []string{"I don't believe it!"}},
-			{"Harrison", []string{"Great, kid, don't get cocky."}},
+			{"Harrison", []string{"Great, kid, don't get cocky.", "Laugh it up, fuzzball!"}},
 		}
 
 		if !reflect.DeepEqual(got, want) { // try slices.Equal()
