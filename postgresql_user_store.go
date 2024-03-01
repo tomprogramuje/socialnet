@@ -124,7 +124,7 @@ func (s *PostgreSQLUserStore) GetUserbase() []User {
 	FROM "user" u
 	JOIN "squeak" s 
 	ON u.id = s.user_id
-	ORDER BY u.id;`
+	ORDER BY u.id, s.id;`
 
 	rows, err := s.db.Query(query)
 	if err != nil {
@@ -135,13 +135,25 @@ func (s *PostgreSQLUserStore) GetUserbase() []User {
 	}
 
 	var userbase []User
+	
 	for rows.Next() {
 		var name, squeak string
 		if err := rows.Scan(&name, &squeak); err != nil {
 			log.Fatal(err)
 		}
-		user := &User{Name: name, Squeaks: []string{squeak}}
-		userbase = append(userbase, *user)
+
+		userExists := false
+		for i := range userbase {
+			if userbase[i].Name == name {
+				userbase[i].Squeaks = append(userbase[i].Squeaks, squeak)
+				userExists = true
+				break
+			}
+		}
+
+		if !userExists {
+			userbase = append(userbase, User{Name: name, Squeaks: []string{squeak}})
+		}
 	}
 
 	return userbase
