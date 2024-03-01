@@ -35,3 +35,5 @@ func (i *InMemoryUserStore) GetUserbase() []User {
 	}
 	return userbase
 }
+
+func (i *InMemoryUserStore) CreateUser(name string) int {return 0}

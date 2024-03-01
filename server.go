@@ -24,6 +24,7 @@ func NewUserServer(store UserStore) *UserServer {
 	router.Handle("/userbase", http.HandlerFunc(u.userbaseHandler))
 	router.Handle("GET /users/{name}", http.HandlerFunc(u.showSqueak))
 	router.Handle("POST /users/{name}", http.HandlerFunc(u.saveSqueak))
+	router.Handle("POST /register/{name}", http.HandlerFunc(u.registerUser))
 
 	u.Handler = router
 
@@ -35,6 +36,7 @@ type UserStore interface {
 	GetUserSqueaks(name string) []string
 	PostSqueak(name, squeak string) int
 	GetUserbase() []User
+	CreateUser(string) int
 }
 
 const jsonContentType = "application/json"
@@ -47,14 +49,14 @@ func (u *UserServer) userbaseHandler(w http.ResponseWriter, r *http.Request) {
 func (u *UserServer) showSqueak(w http.ResponseWriter, r *http.Request) {
 	user := r.PathValue("name")
 	squeaks := u.store.GetUserSqueaks(user)
-	
+
 	if len(squeaks) == 0 {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
 	w.Header().Set("Content-Type", jsonContentType)
-	
+
 	if err := json.NewEncoder(w).Encode(squeaks); err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -64,14 +66,20 @@ func (u *UserServer) showSqueak(w http.ResponseWriter, r *http.Request) {
 func (u *UserServer) saveSqueak(w http.ResponseWriter, r *http.Request) {
 	user := r.PathValue("name")
 	var payload User
-	
+
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 		http.Error(w, "Failed to decode JSON payload", http.StatusBadRequest)
 		return
 	}
-	
+
 	squeak := string(payload.Squeaks[0])
-	
+
 	u.store.PostSqueak(user, squeak)
+	w.WriteHeader(http.StatusAccepted)
+}
+
+func (u *UserServer) registerUser(w http.ResponseWriter, r *http.Request) {
+	user := r.PathValue("name")
+	u.store.CreateUser(user) 
 	w.WriteHeader(http.StatusAccepted)
 }

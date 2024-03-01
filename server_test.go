@@ -31,6 +31,8 @@ func (s *StubUserStore) GetUserbase() []User {
 	return s.userbase
 }
 
+func (s *StubUserStore) CreateUser(name string) int {return 0}
+
 func TestStoreNewSqueaks(t *testing.T) {
 	store := StubUserStore{
 		map[string][]string{},
