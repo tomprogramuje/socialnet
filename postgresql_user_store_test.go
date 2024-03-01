@@ -108,7 +108,7 @@ func TestDatabase(t *testing.T) {
 			{"Harrison", []string{"Great, kid, don't get cocky.", "Laugh it up, fuzzball!"}},
 		}
 
-		if !reflect.DeepEqual(got, want) { // try slices.Equal()
+		if !reflect.DeepEqual(got, want) { 
 			t.Errorf("got %v want %v", got, want)
 		}
 	})
