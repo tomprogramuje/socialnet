@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"reflect"
 	"slices"
@@ -20,60 +21,52 @@ func TestDatabase(t *testing.T) {
 
 	store := NewPostgreSQLUserStore(db)
 
-	t.Run("creates new user", func(t *testing.T) {
+	t.Run("creates new user Mark", func(t *testing.T) {
 		name := "Mark"
-
-		got := store.CreateUser(name)
+		
+		got, err := store.CreateUser(name)
 		want := 1
 
-		if got != want {
-			t.Errorf("got wrong id back, got %d want %d", got, want)
-		}
+		assertEqual(t, got, want)
+		assertNoError(t, err)
 	})
-	t.Run("returns user name", func(t *testing.T) {
+	t.Run("returns user id 1 name", func(t *testing.T) {
 		id := 1
-
-		got := store.GetUserByID(id)
+		
+		got, err := store.GetUserByID(id)
 		want := "Mark"
 
-		if got != want {
-			t.Errorf("got wrong name back, got %s want %s", got, want)
-		}
-
+		assertEqual(t, got, want)
+		assertNoError(t, err)
 	})
 	t.Run("returns not found for nonexisting user", func(t *testing.T) {
 		id := 2
+		_, err := store.GetUserByID(id)
+		want := fmt.Errorf("User with id %d not found", id)
 
-		got := store.GetUserByID(id)
-		want := "User not found"
-
-		if got != want {
-			t.Errorf("got %s back, but wanted %s", got, want)
+		if err.Error() != want.Error() {
+			t.Errorf("got %q back, but wanted %q", err, want)
 		}
 	})
-	t.Run("returns user id", func(t *testing.T) {
+	t.Run("returns Mark id", func(t *testing.T) {
 		name := "Mark"
-
-		got := store.GetUserByName(name)
+		
+		got, err := store.GetUserByName(name)
 		want := 1
 
-		if got != want {
-			t.Errorf("got wrong id back, got %d, want %d", got, want)
-		}
+		assertEqual(t, got, want)
+		assertNoError(t, err)
 	})
-	t.Run("stores new squeak", func(t *testing.T) {
+	t.Run("stores new squeak for Mark", func(t *testing.T) {
 		name := "Mark"
 		squeak := "I don't believe it!"
 
-		got := store.PostSqueak(name, squeak)
-
+		got, _ := store.PostSqueak(name, squeak)
 		want := 1
 
-		if got != want {
-			t.Errorf("got wrong id back, got %d want %d", got, want)
-		}
+		assertEqual(t, got, want)
 	})
-	t.Run("get user squeak", func(t *testing.T) {
+	t.Run("get Mark's squeak", func(t *testing.T) {
 		user := "Mark"
 
 		got := store.GetUserSqueaks(user)
@@ -97,10 +90,12 @@ func TestDatabase(t *testing.T) {
 	t.Run("stores squeaks for Harrison and returns the userbase", func(t *testing.T) {
 		name := "Harrison"
 		squeak := "Great, kid, don't get cocky."
-		store.PostSqueak(name, squeak)
+		_, err := store.PostSqueak(name, squeak)
+		assertNoError(t, err)
 
 		squeak = "Laugh it up, fuzzball!"
-		store.PostSqueak(name, squeak)
+		_, err = store.PostSqueak(name, squeak)
+		assertNoError(t, err)
 
 		got := store.GetUserbase()
 		want := []User{
@@ -108,10 +103,24 @@ func TestDatabase(t *testing.T) {
 			{"Harrison", []string{"Great, kid, don't get cocky.", "Laugh it up, fuzzball!"}},
 		}
 
-		if !reflect.DeepEqual(got, want) { 
+		if !reflect.DeepEqual(got, want) {
 			t.Errorf("got %v want %v", got, want)
 		}
 	})
+}
+
+func assertEqual[V comparable](t testing.TB, got, want V) {
+	t.Helper()
+	if got != want {
+		t.Error("returned values differ, got", got, "want", want)
+	}
+}
+
+func assertNoError(t testing.TB, err error) {
+	t.Helper()
+	if err != nil {
+		t.Fatalf("didn't expect an error but got one, %v", err)
+	}
 }
 
 func clearDatabase(db *sql.DB) {

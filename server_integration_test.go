@@ -17,12 +17,13 @@ func TestPostingSqueaksAndRetrievingThem(t *testing.T) {
 		request, _ := http.NewRequest(http.MethodPost, "/register/Harrison", nil)
 		server.ServeHTTP(httptest.NewRecorder(), request)
 
-		got := testStore.GetUserByName("Harrison")
+		got, err := testStore.GetUserByName("Harrison")
 		want := 1
 
 		if got != want {
 			t.Errorf("got %d want %d", got, want)
 		}
+		assertNoError(t, err)
 	})
 	t.Run("save squeaks for Harrison", func(t *testing.T) {
 		response := httptest.NewRecorder()

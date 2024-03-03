@@ -22,16 +22,16 @@ func (s *StubUserStore) GetUserSqueaks(name string) []string {
 	return s.squeaks[name]
 }
 
-func (s *StubUserStore) PostSqueak(name, squeak string) int {
+func (s *StubUserStore) PostSqueak(name, squeak string) (int, error) {
 	s.squeaks[name] = append(s.squeaks[name], squeak)
-	return 0
+	return 0, nil
 }
 
 func (s *StubUserStore) GetUserbase() []User {
 	return s.userbase
 }
 
-func (s *StubUserStore) CreateUser(name string) int {return 0}
+func (s *StubUserStore) CreateUser(name string) (int, error) {return 0, nil}
 
 func TestStoreNewSqueaks(t *testing.T) {
 	store := StubUserStore{

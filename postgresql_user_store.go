@@ -31,71 +31,69 @@ func NewPostgreSQLConnection(dsName string) *sql.DB {
 	return db
 }
 
-func (s *PostgreSQLUserStore) CreateUser(name string) int {
-	query := `INSERT INTO "user" (name)
-	VALUES ($1) RETURNING id`
+func (s *PostgreSQLUserStore) CreateUser(name string) (int, error) {
+	query := `INSERT INTO "user" (name) VALUES ($1) RETURNING id`
 
 	var id int
 	err := s.db.QueryRow(query, name).Scan(&id)
 	if err != nil {
-		return -1
+		return -1, nil // todo
 	}
 
-	return id
+	return id, nil
 }
 
-func (s *PostgreSQLUserStore) GetUserByID(id int) string {
-	query := `SELECT name
-	FROM "user"
-	WHERE id = $1
-	`
+func (s *PostgreSQLUserStore) GetUserByID(id int) (string, error) {
+	query := `SELECT name FROM "user" WHERE id = $1`
 
 	var name string
 	err := s.db.QueryRow(query, id).Scan(&name)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return "User not found" 
+			return "", fmt.Errorf("User with id %d not found", id)
 		}
 		log.Fatal(err)
 	}
 
-	return name
+	return name, nil
 }
 
-func (s *PostgreSQLUserStore) GetUserByName(name string) int {
-	query := `SELECT id
-	FROM "user"
-	WHERE name = $1
-	`
+func (s *PostgreSQLUserStore) GetUserByName(name string) (int, error) {
+	query := `SELECT id FROM "user"	WHERE name = $1`
 
 	var id int
 	err := s.db.QueryRow(query, name).Scan(&id)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return -1
+			return -1, fmt.Errorf("no user of that name (%s) found", name)
 		}
 		log.Fatal(err)
 	}
 
-	return id
+	return id, nil
 }
 
-func (s *PostgreSQLUserStore) PostSqueak(name, squeak string) int {
-	user_id := s.GetUserByName(name)
-	query := `INSERT INTO squeak (user_id, text)
-	VALUES ($1, $2) RETURNING id`
+func (s *PostgreSQLUserStore) PostSqueak(name, squeak string) (int, error) {
+	user_id, err := s.GetUserByName(name)
+	if err != nil {
+		return 0, err // todo
+	}
+	query := `INSERT INTO squeak (user_id, text) VALUES ($1, $2) RETURNING id`
 
 	var id int
-	err := s.db.QueryRow(query, user_id, squeak).Scan(&id)
+	err = s.db.QueryRow(query, user_id, squeak).Scan(&id)
 	if err != nil {
-		return -1
+		return -1, nil // todo
 	}
 
-	return id
+	return id, nil
 }
 
 func (s *PostgreSQLUserStore) GetUserSqueaks(name string) []string {
-	user_id := s.GetUserByName(name)
+	user_id, err := s.GetUserByName(name)
+	if err != nil {
+		return []string{fmt.Sprintf("No user of that name (%s) found", name)}
+	}
 	query := `SELECT text FROM squeak WHERE user_id = $1`
 
 	var squeaks []string
@@ -108,8 +106,7 @@ func (s *PostgreSQLUserStore) GetUserSqueaks(name string) []string {
 
 	var squeak string
 	for rows.Next() {
-		err := rows.Scan(&squeak)
-		if err != nil {
+		if err := rows.Scan(&squeak); err != nil {
 			log.Fatal(err)
 		}
 		squeaks = append(squeaks, squeak)
@@ -123,11 +120,8 @@ func (s *PostgreSQLUserStore) GetUserSqueaks(name string) []string {
 }
 
 func (s *PostgreSQLUserStore) GetUserbase() []User {
-	query := `SELECT name, text 
-	FROM "user" u
-	JOIN "squeak" s 
-	ON u.id = s.user_id
-	ORDER BY u.id, s.id;`
+	query := `SELECT name, text FROM "user" u JOIN "squeak" s 
+		ON u.id = s.user_id ORDER BY u.id, s.id;`
 
 	rows, err := s.db.Query(query)
 	if err != nil {
@@ -138,7 +132,7 @@ func (s *PostgreSQLUserStore) GetUserbase() []User {
 	}
 
 	var userbase []User
-	
+
 	for rows.Next() {
 		var name, squeak string
 		if err := rows.Scan(&name, &squeak); err != nil {
@@ -161,3 +155,16 @@ func (s *PostgreSQLUserStore) GetUserbase() []User {
 
 	return userbase
 }
+
+/*func handleErrors(err error, errMsg string) interface {
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return errMsg
+		}
+		log.Fatal(err)
+	}
+
+	return ""
+}*/
+
+// todo: errorHelper func - probably generic func returning different types of data, db fetching helpers?

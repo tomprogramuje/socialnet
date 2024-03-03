@@ -34,9 +34,9 @@ func NewUserServer(store UserStore) *UserServer {
 type UserStore interface {
 	// Squeaks are Gopher's variant of tweets
 	GetUserSqueaks(name string) []string
-	PostSqueak(name, squeak string) int
-	GetUserbase() []User
-	CreateUser(string) int
+	PostSqueak(name, squeak string) (int, error)
+	GetUserbase() ([]User)
+	CreateUser(string) (int, error)
 }
 
 const jsonContentType = "application/json"
