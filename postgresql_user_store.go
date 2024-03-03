@@ -156,7 +156,7 @@ func (s *PostgreSQLUserStore) GetUserbase() []User {
 	return userbase
 }
 
-/*func handleErrors(err error, errMsg string) interface {
+/*func handleErrors[T any](err error, returnValue T) returnValue {
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return errMsg

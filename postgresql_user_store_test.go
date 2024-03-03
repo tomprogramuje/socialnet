@@ -72,9 +72,7 @@ func TestDatabase(t *testing.T) {
 		got := store.GetUserSqueaks(user)
 		want := []string{"I don't believe it!"}
 
-		if !slices.Equal(got, want) {
-			t.Errorf("did not get correct reponse, got %s, want %s", got, want)
-		}
+		assertSqueaks(t, got, want)
 	})
 	t.Run("fetching squeaks for user with no stored squeaks", func(t *testing.T) {
 		name := "Harrison"
@@ -83,9 +81,7 @@ func TestDatabase(t *testing.T) {
 		got := store.GetUserSqueaks(name)
 		want := []string{"No squeaks found for Harrison"}
 
-		if !slices.Equal(got, want) {
-			t.Errorf("did not get correct response, got %s, want %s", got, want)
-		}
+		assertSqueaks(t, got, want)
 	})
 	t.Run("stores squeaks for Harrison and returns the userbase", func(t *testing.T) {
 		name := "Harrison"
@@ -112,7 +108,14 @@ func TestDatabase(t *testing.T) {
 func assertEqual[V comparable](t testing.TB, got, want V) {
 	t.Helper()
 	if got != want {
-		t.Error("returned values differ, got", got, "want", want)
+		t.Error("returned value differs from expected value, got", got, "want", want)
+	}
+}
+
+func assertSqueaks(t testing.TB, got, want []string) {
+	t.Helper()
+	if !slices.Equal(got, want) {
+		t.Errorf("did not get correct response, got %s, want %s", got, want)
 	}
 }
 
