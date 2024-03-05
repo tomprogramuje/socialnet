@@ -18,8 +18,13 @@ type StubUserStore struct {
 	userbase   []User
 }
 
-func (s *StubUserStore) GetUserSqueaks(name string) []string {
-	return s.squeaks[name]
+func (s *StubUserStore) GetUserSqueaks(name string) ([]string, error) {
+	squeaks, exist := s.squeaks[name]
+	if !exist {
+		return nil, fmt.Errorf("no squeaks found for %s", name)
+	}
+
+	return squeaks, nil
 }
 
 func (s *StubUserStore) PostSqueak(name, squeak string) (int, error) {
@@ -27,8 +32,8 @@ func (s *StubUserStore) PostSqueak(name, squeak string) (int, error) {
 	return 0, nil
 }
 
-func (s *StubUserStore) GetUserbase() []User {
-	return s.userbase
+func (s *StubUserStore) GetUserbase() ([]User, error) {
+	return s.userbase, nil
 }
 
 func (s *StubUserStore) CreateUser(name string) (int, error) {return 0, nil}
@@ -60,9 +65,10 @@ func TestStoreNewSqueaks(t *testing.T) {
 		request = newGetSqueakRequest("Mark")
 		server.ServeHTTP(response, request)
 
-		got := store.GetUserSqueaks("Mark")
+		got, err := store.GetUserSqueaks("Mark")
 
 		assertResponse(t, got, []string{"Let go of your hate."})
+		assertNoError(t, err)
 	})
 }
 

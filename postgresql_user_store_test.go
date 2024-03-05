@@ -23,7 +23,7 @@ func TestDatabase(t *testing.T) {
 
 	t.Run("creates new user Mark", func(t *testing.T) {
 		name := "Mark"
-		
+
 		got, err := store.CreateUser(name)
 		want := 1
 
@@ -32,7 +32,7 @@ func TestDatabase(t *testing.T) {
 	})
 	t.Run("returns user id 1 name", func(t *testing.T) {
 		id := 1
-		
+
 		got, err := store.GetUserByID(id)
 		want := "Mark"
 
@@ -41,16 +41,17 @@ func TestDatabase(t *testing.T) {
 	})
 	t.Run("returns not found for nonexisting user", func(t *testing.T) {
 		id := 2
-		_, err := store.GetUserByID(id)
-		want := fmt.Errorf("User with id %d not found", id)
 
-		if err.Error() != want.Error() {
-			t.Errorf("got %q back, but wanted %q", err, want)
-		}
+		_, err := store.GetUserByID(id)
+
+		got := err.Error()
+		want := fmt.Sprintf("user with id %d not found", id)
+
+		assertError(t, got, want)
 	})
 	t.Run("returns Mark id", func(t *testing.T) {
 		name := "Mark"
-		
+
 		got, err := store.GetUserByName(name)
 		want := 1
 
@@ -61,27 +62,31 @@ func TestDatabase(t *testing.T) {
 		name := "Mark"
 		squeak := "I don't believe it!"
 
-		got, _ := store.PostSqueak(name, squeak)
+		got, err := store.PostSqueak(name, squeak)
 		want := 1
 
 		assertEqual(t, got, want)
+		assertNoError(t, err)
 	})
 	t.Run("get Mark's squeak", func(t *testing.T) {
 		user := "Mark"
 
-		got := store.GetUserSqueaks(user)
+		got, err := store.GetUserSqueaks(user)
 		want := []string{"I don't believe it!"}
 
 		assertSqueaks(t, got, want)
+		assertNoError(t, err)
 	})
 	t.Run("fetching squeaks for user with no stored squeaks", func(t *testing.T) {
 		name := "Harrison"
 		store.CreateUser(name)
 
-		got := store.GetUserSqueaks(name)
-		want := []string{"No squeaks found for Harrison"}
+		_, err := store.GetUserSqueaks(name)
 
-		assertSqueaks(t, got, want)
+		got := err.Error()
+		want := "no squeaks found for Harrison"
+
+		assertError(t, got, want)
 	})
 	t.Run("stores squeaks for Harrison and returns the userbase", func(t *testing.T) {
 		name := "Harrison"
@@ -93,7 +98,7 @@ func TestDatabase(t *testing.T) {
 		_, err = store.PostSqueak(name, squeak)
 		assertNoError(t, err)
 
-		got := store.GetUserbase()
+		got, err := store.GetUserbase()
 		want := []User{
 			{"Mark", []string{"I don't believe it!"}},
 			{"Harrison", []string{"Great, kid, don't get cocky.", "Laugh it up, fuzzball!"}},
@@ -102,6 +107,7 @@ func TestDatabase(t *testing.T) {
 		if !reflect.DeepEqual(got, want) {
 			t.Errorf("got %v want %v", got, want)
 		}
+		assertNoError(t, err)
 	})
 }
 
@@ -116,6 +122,13 @@ func assertSqueaks(t testing.TB, got, want []string) {
 	t.Helper()
 	if !slices.Equal(got, want) {
 		t.Errorf("did not get correct response, got %s, want %s", got, want)
+	}
+}
+
+func assertError(t testing.TB, got, want string) {
+	t.Helper()
+	if got != want {
+		t.Errorf("got %q back, but wanted %q", got, want)
 	}
 }
 

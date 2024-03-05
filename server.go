@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 )
 
@@ -33,9 +34,9 @@ func NewUserServer(store UserStore) *UserServer {
 
 type UserStore interface {
 	// Squeaks are Gopher's variant of tweets
-	GetUserSqueaks(name string) []string
+	GetUserSqueaks(name string) ([]string, error)
 	PostSqueak(name, squeak string) (int, error)
-	GetUserbase() ([]User)
+	GetUserbase() ([]User, error)
 	CreateUser(string) (int, error)
 }
 
@@ -43,14 +44,23 @@ const jsonContentType = "application/json"
 
 func (u *UserServer) userbaseHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", jsonContentType)
-	json.NewEncoder(w).Encode(u.store.GetUserbase())
+	userbase, err := u.store.GetUserbase()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	if err := json.NewEncoder(w).Encode(userbase); err != nil {
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
 }
 
 func (u *UserServer) showSqueak(w http.ResponseWriter, r *http.Request) {
 	user := r.PathValue("name")
-	squeaks := u.store.GetUserSqueaks(user)
-
-	if len(squeaks) == 0 {
+	squeaks, err := u.store.GetUserSqueaks(user)
+	if err != nil {
+		log.Println(err)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
@@ -58,7 +68,7 @@ func (u *UserServer) showSqueak(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", jsonContentType)
 
 	if err := json.NewEncoder(w).Encode(squeaks); err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
 }
@@ -68,7 +78,7 @@ func (u *UserServer) saveSqueak(w http.ResponseWriter, r *http.Request) {
 	var payload User
 
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		http.Error(w, "Failed to decode JSON payload", http.StatusBadRequest)
+		http.Error(w, "failed to decode JSON payload", http.StatusBadRequest)
 		return
 	}
 
