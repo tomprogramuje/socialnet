@@ -6,8 +6,7 @@ import (
 )
 
 func main() {
-	server := NewUserServer(NewInMemoryUserStore())
+	db := NewPostgreSQLConnection(connStrProd)
+	server := NewUserServer(NewPostgreSQLUserStore(db))
 	log.Fatal(http.ListenAndServe(":8000", server))
 }
-
-// todo: use PostgresqlUserStore

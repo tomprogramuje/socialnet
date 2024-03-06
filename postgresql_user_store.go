@@ -9,6 +9,8 @@ import (
 	_ "github.com/lib/pq"
 )
 
+const connStrProd = "postgres://postgres:1234@localhost:5432/postgres?sslmode=disable"
+
 type PostgreSQLUserStore struct {
 	db *sql.DB
 }
