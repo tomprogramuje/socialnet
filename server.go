@@ -27,7 +27,7 @@ func NewUserServer(store UserStore) *UserServer {
 	router.Handle("/userbase", http.HandlerFunc(u.userbaseHandler))
 	router.Handle("GET /users/{name}", http.HandlerFunc(u.showSqueaks)) 
 	router.Handle("POST /users/{name}", http.HandlerFunc(u.saveSqueak))
-	router.Handle("POST /register/", http.HandlerFunc(u.registerUser)) 
+	router.Handle("/register", http.HandlerFunc(u.registerUser)) 
 
 	u.Handler = router
 

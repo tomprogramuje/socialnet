@@ -36,7 +36,10 @@ func (s *StubUserStore) GetUserbase() ([]User, error) {
 	return s.userbase, nil
 }
 
-func (s *StubUserStore) CreateUser(name, email, password string) (int, error) {return 0, nil}
+func (s *StubUserStore) CreateUser(name, email, password string) (int, error) {
+	s.userbase = append(s.userbase, User{name, email, password, []string{}})
+	return 0, nil
+}
 
 func TestStoreNewSqueaks(t *testing.T) {
 	store := StubUserStore{
@@ -151,7 +154,12 @@ func TestRegister(t *testing.T) {
 	server := NewUserServer(&store)
 
 	t.Run("returns 202 after registering a user", func(t *testing.T) {
-		request, _ := http.NewRequest(http.MethodPost, "/registration", nil)
+		body := []byte(`{
+			"username": "Carrie", 
+			"email": "test",
+			"password": "test"
+		}`)
+		request, _ := http.NewRequest(http.MethodPost, "/register", bytes.NewBuffer(body))
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)

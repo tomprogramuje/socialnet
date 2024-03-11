@@ -19,7 +19,7 @@ func TestPostingSqueaksAndRetrievingThem(t *testing.T) {
 			"username": "Harrison", "email": "test", "password": "test"
 		}`)
 		
-		request, _ := http.NewRequest(http.MethodPost, "/register/", bytes.NewBuffer(body))
+		request, _ := http.NewRequest(http.MethodPost, "/register", bytes.NewBuffer(body))
 		server.ServeHTTP(httptest.NewRecorder(), request)
 
 		got, err := testStore.GetUserByName("Harrison")
