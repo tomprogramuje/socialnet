@@ -33,9 +33,9 @@ func (i *InMemoryUserStore) PostSqueak(name, squeak string) (int, error) {
 func (i *InMemoryUserStore) GetUserbase() ([]User, error) {
 	var userbase []User
 	for name, squeaks := range i.store {
-		userbase = append(userbase, User{name, squeaks})
+		userbase = append(userbase, User{name, "", "", squeaks})
 	}
 	return userbase, nil
 }
 
-func (i *InMemoryUserStore) CreateUser(name string) (int, error) { return 0, nil }
+func (i *InMemoryUserStore) CreateUser(name, password string) (int, error) { return 0, nil }

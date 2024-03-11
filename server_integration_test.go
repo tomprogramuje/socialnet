@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -9,12 +10,16 @@ import (
 func TestPostingSqueaksAndRetrievingThem(t *testing.T) {
 	db := NewPostgreSQLConnection(connStrTest)
 	clearDatabase(db)
-	initializeTestDatabase(db)
+	initializeDatabase(db)
 	testStore := NewPostgreSQLUserStore(db)
 	server := NewUserServer(testStore)
 
 	t.Run("create new user Harrison", func(t *testing.T) {
-		request, _ := http.NewRequest(http.MethodPost, "/register/Harrison", nil)
+		body := []byte(`{
+			"username": "Harrison", "email": "test", "password": "test"
+		}`)
+		
+		request, _ := http.NewRequest(http.MethodPost, "/register/", bytes.NewBuffer(body))
 		server.ServeHTTP(httptest.NewRecorder(), request)
 
 		got, err := testStore.GetUserByName("Harrison")
@@ -42,7 +47,7 @@ func TestPostingSqueaksAndRetrievingThem(t *testing.T) {
 	t.Run("get Harrison's squeaks", func(t *testing.T) {
 		response := httptest.NewRecorder()
 		server.ServeHTTP(response, newGetSqueakRequest("Harrison"))
-		
+
 		got := getUserSqueaksFromResponse(t, response.Body)
 		want := []string{"Great, kid, don't get cocky.", "Laugh it up, fuzzball!"}
 
@@ -57,7 +62,7 @@ func TestPostingSqueaksAndRetrievingThem(t *testing.T) {
 
 		got := getUserbaseFromResponse(t, response.Body)
 		want := []User{
-			{"Harrison", []string{"Great, kid, don't get cocky.", "Laugh it up, fuzzball!"}},
+			{"Harrison", "test", "test", []string{"Great, kid, don't get cocky.", "Laugh it up, fuzzball!"}},
 		}
 
 		assertUserbase(t, got, want)

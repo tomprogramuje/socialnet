@@ -1,9 +1,7 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
-	"log"
 	"reflect"
 	"slices"
 	"testing"
@@ -17,14 +15,16 @@ func TestDatabase(t *testing.T) {
 
 	db := NewPostgreSQLConnection(connStrTest)
 	clearDatabase(db)
-	initializeTestDatabase(db)
+	initializeDatabase(db)
 
 	store := NewPostgreSQLUserStore(db)
 
 	t.Run("creates new user Mark", func(t *testing.T) {
 		name := "Mark"
+		email := "test"
+		password := "test"
 
-		got, err := store.CreateUser(name)
+		got, err := store.CreateUser(name, email, password)
 		want := 1
 
 		assertEqual(t, got, want)
@@ -78,10 +78,13 @@ func TestDatabase(t *testing.T) {
 		assertNoError(t, err)
 	})
 	t.Run("fetching squeaks for user with no stored squeaks", func(t *testing.T) {
-		name := "Harrison"
-		store.CreateUser(name)
+		username := "Harrison"
+		email := "test2"
+		password := "test2"
+		id, _ := store.CreateUser(username, email, password)
+		fmt.Println(id)
 
-		_, err := store.GetUserSqueaks(name)
+		_, err := store.GetUserSqueaks(username)
 
 		got := err.Error()
 		want := "no squeaks found for Harrison"
@@ -100,8 +103,8 @@ func TestDatabase(t *testing.T) {
 
 		got, err := store.GetUserbase()
 		want := []User{
-			{"Mark", []string{"I don't believe it!"}},
-			{"Harrison", []string{"Great, kid, don't get cocky.", "Laugh it up, fuzzball!"}},
+			{"Mark", "test", "test", []string{"I don't believe it!"}},
+			{"Harrison", "test2", "test2", []string{"Great, kid, don't get cocky.", "Laugh it up, fuzzball!"}},
 		}
 
 		if !reflect.DeepEqual(got, want) {
@@ -136,30 +139,5 @@ func assertNoError(t testing.TB, err error) {
 	t.Helper()
 	if err != nil {
 		t.Fatalf("didn't expect an error but got one, %v", err)
-	}
-}
-
-func clearDatabase(db *sql.DB) {
-	_, err := db.Exec(`DROP TABLE IF EXISTS squeak; DROP TABLE IF EXISTS "user";`)
-	if err != nil {
-		log.Fatalf("error dropping table: %v", err)
-	}
-}
-
-func initializeTestDatabase(db *sql.DB) {
-	query := `CREATE TABLE "user" (
-		id SERIAL PRIMARY KEY,
-		name VARCHAR(100) NOT NULL
-	);
-	CREATE TABLE "squeak" (
-		id SERIAL PRIMARY KEY,
-		user_id INT,
-		text VARCHAR(255),
-		FOREIGN KEY (user_id) REFERENCES "user"(id)
-	)`
-
-	_, err := db.Exec(query)
-	if err != nil {
-		log.Fatalf("error initializing database: %v", err)
 	}
 }

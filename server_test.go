@@ -36,7 +36,7 @@ func (s *StubUserStore) GetUserbase() ([]User, error) {
 	return s.userbase, nil
 }
 
-func (s *StubUserStore) CreateUser(name string) (int, error) {return 0, nil}
+func (s *StubUserStore) CreateUser(name, email, password string) (int, error) {return 0, nil}
 
 func TestStoreNewSqueaks(t *testing.T) {
 	store := StubUserStore{
@@ -125,9 +125,9 @@ func TestUserbase(t *testing.T) {
 
 	t.Run("it returns the user base as JSON", func(t *testing.T) {
 		wantedUserbase := []User{
-			{"Mark", []string{"I don't believe it!"}},
-			{"Harrison", []string{"I have a bad feeling about this.", "Great, kid, don't get cocky."}},
-			{"Carrie", []string{"Will somebody get this big walking carpet out of my way?"}},
+			{"Mark", "", "", []string{"I don't believe it!"}},
+			{"Harrison", "", "", []string{"I have a bad feeling about this.", "Great, kid, don't get cocky."}},
+			{"Carrie", "", "", []string{"Will somebody get this big walking carpet out of my way?"}},
 		}
 
 		store := StubUserStore{nil, wantedUserbase}
@@ -145,6 +145,7 @@ func TestUserbase(t *testing.T) {
 		assertContentType(t, response, jsonContentType)
 	})
 }
+
 
 func newGetSqueakRequest(name string) *http.Request {
 	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/users/%s", name), nil)
