@@ -146,6 +146,19 @@ func TestUserbase(t *testing.T) {
 	})
 }
 
+func TestRegister(t *testing.T) {
+	store := StubUserStore{nil, nil}
+	server := NewUserServer(&store)
+
+	t.Run("returns 202 after registering a user", func(t *testing.T) {
+		request, _ := http.NewRequest(http.MethodPost, "/registration", nil)
+		response := httptest.NewRecorder()
+
+		server.ServeHTTP(response, request)
+
+		assertStatus(t, response.Code, http.StatusAccepted)
+	})
+}
 
 func newGetSqueakRequest(name string) *http.Request {
 	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/users/%s", name), nil)
