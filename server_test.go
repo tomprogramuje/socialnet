@@ -153,7 +153,7 @@ func TestRegister(t *testing.T) {
 	store := StubUserStore{nil, nil}
 	server := NewUserServer(&store)
 
-	t.Run("returns 202 after registering a user", func(t *testing.T) {
+	t.Run("returns userbase after registering a user", func(t *testing.T) {
 		body := []byte(`{
 			"username": "Carrie", 
 			"email": "test",
@@ -165,6 +165,18 @@ func TestRegister(t *testing.T) {
 		server.ServeHTTP(response, request)
 
 		assertStatus(t, response.Code, http.StatusAccepted)
+		
+		request = newUserbaseRequest()
+		response = httptest.NewRecorder()
+
+		server.ServeHTTP(response, request)
+
+		got := getUserbaseFromResponse(t, response.Body)
+		want := []User{
+			{"Carrie", "test", "test", []string{}},
+		}
+		
+		assertUserbase(t, got, want)
 	})
 }
 
