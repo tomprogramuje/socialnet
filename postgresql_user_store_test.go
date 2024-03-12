@@ -20,11 +20,11 @@ func TestDatabase(t *testing.T) {
 	store := NewPostgreSQLUserStore(db)
 
 	t.Run("creates new user Mark", func(t *testing.T) {
-		name := "Mark"
+		username := "Mark"
 		email := "test"
 		password := "test"
 
-		got, err := store.CreateUser(name, email, password)
+		got, err := store.CreateUser(username, email, password)
 		want := 1
 
 		assertEqual(t, got, want)
@@ -50,28 +50,28 @@ func TestDatabase(t *testing.T) {
 		assertError(t, got, want)
 	})
 	t.Run("returns Mark id", func(t *testing.T) {
-		name := "Mark"
+		username := "Mark"
 
-		got, err := store.GetUserByName(name)
+		got, err := store.GetUserByName(username)
 		want := 1
 
 		assertEqual(t, got, want)
 		assertNoError(t, err)
 	})
 	t.Run("stores new squeak for Mark", func(t *testing.T) {
-		name := "Mark"
+		username := "Mark"
 		squeak := "I don't believe it!"
 
-		got, err := store.PostSqueak(name, squeak)
+		got, err := store.PostSqueak(username, squeak)
 		want := 1
 
 		assertEqual(t, got, want)
 		assertNoError(t, err)
 	})
 	t.Run("get Mark's squeak", func(t *testing.T) {
-		user := "Mark"
+		username := "Mark"
 
-		got, err := store.GetUserSqueaks(user)
+		got, err := store.GetUserSqueaks(username)
 		want := []string{"I don't believe it!"}
 
 		assertSqueaks(t, got, want)
@@ -81,8 +81,7 @@ func TestDatabase(t *testing.T) {
 		username := "Harrison"
 		email := "test2"
 		password := "test2"
-		id, _ := store.CreateUser(username, email, password)
-		fmt.Println(id)
+		store.CreateUser(username, email, password)
 
 		_, err := store.GetUserSqueaks(username)
 
@@ -92,13 +91,13 @@ func TestDatabase(t *testing.T) {
 		assertError(t, got, want)
 	})
 	t.Run("stores squeaks for Harrison and returns the userbase", func(t *testing.T) {
-		name := "Harrison"
+		username := "Harrison"
 		squeak := "Great, kid, don't get cocky."
-		_, err := store.PostSqueak(name, squeak)
+		_, err := store.PostSqueak(username, squeak)
 		assertNoError(t, err)
 
 		squeak = "Laugh it up, fuzzball!"
-		_, err = store.PostSqueak(name, squeak)
+		_, err = store.PostSqueak(username, squeak)
 		assertNoError(t, err)
 
 		got, err := store.GetUserbase()

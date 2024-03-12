@@ -14,7 +14,7 @@ const connStrProd = "postgres://postgres:1234@localhost:5432/postgres?sslmode=di
 func initializeDatabase(db *sql.DB) {
 	query := `CREATE TABLE IF NOT EXISTS "user" (
 		id SERIAL PRIMARY KEY,
-		username VARCHAR(100) NOT NULL UNIQUE,
+		username VARCHAR(100) UNIQUE NOT NULL,
 		email VARCHAR(100) UNIQUE NOT NULL,
 		password VARCHAR(100) NOT NULL
 	);

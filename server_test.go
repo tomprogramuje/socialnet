@@ -149,11 +149,11 @@ func TestUserbase(t *testing.T) {
 	})
 }
 
-func TestRegister(t *testing.T) {
-	store := StubUserStore{nil, nil}
+func TestAuthentication(t *testing.T) {
+	store := StubUserStore{}
 	server := NewUserServer(&store)
 
-	t.Run("returns userbase after registering a user", func(t *testing.T) {
+	t.Run("returns correct userbase after registering new user", func(t *testing.T) {
 		body := []byte(`{
 			"username": "Carrie", 
 			"email": "test",
@@ -177,6 +177,27 @@ func TestRegister(t *testing.T) {
 		}
 		
 		assertUserbase(t, got, want)
+	})
+	t.Run("password successfully verified", func(t *testing.T) {
+		body := []byte(`{
+			"username": "Carrie", 
+			"password": "test"
+		}`)
+		request, _ := http.NewRequest(http.MethodPost, "/login", bytes.NewBuffer(body))
+		response := httptest.NewRecorder()
+
+		server.ServeHTTP(response, request)
+
+		assertStatus(t, response.Code, http.StatusAccepted)
+	})
+	t.Run("login credentials already taken", func(t *testing.T) {
+
+	})
+	t.Run("user succesfully logged in", func(t *testing.T) {
+
+	})
+	t.Run("failed login", func(t *testing.T) {
+
 	})
 }
 
