@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserServer struct {
@@ -12,10 +14,11 @@ type UserServer struct {
 }
 
 type User struct {
-	Username    string
-	Email string
+	ID       int
+	Username string
+	Email    string
 	Password string
-	Squeaks []string
+	Squeaks  []string
 }
 
 func NewUserServer(store UserStore) *UserServer {
@@ -25,9 +28,10 @@ func NewUserServer(store UserStore) *UserServer {
 
 	router := http.NewServeMux()
 	router.Handle("/userbase", http.HandlerFunc(u.userbaseHandler))
-	router.Handle("GET /users/{name}", http.HandlerFunc(u.showSqueaks)) 
+	router.Handle("GET /users/{name}", http.HandlerFunc(u.showSqueaks))
 	router.Handle("POST /users/{name}", http.HandlerFunc(u.saveSqueak))
-	router.Handle("/register", http.HandlerFunc(u.registerUser)) 
+	router.Handle("/register", http.HandlerFunc(u.registerUser))
+	router.Handle("/login", http.HandlerFunc(u.loginUser))
 
 	u.Handler = router
 
@@ -40,6 +44,7 @@ type UserStore interface {
 	PostSqueak(name, squeak string) (int, error)
 	GetUserbase() ([]User, error)
 	CreateUser(name, email, password string) (int, error)
+	GetUserByUsername(username string) (*User, error)
 }
 
 const jsonContentType = "application/json"
@@ -102,6 +107,37 @@ func (u *UserServer) registerUser(w http.ResponseWriter, r *http.Request) {
 	email := string(payload.Email)
 	password := string(payload.Password)
 
-	u.store.CreateUser(username, email, password) 
+	encpw, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		http.Error(w, "failed hashing the password", http.StatusInternalServerError)
+	}
+
+	u.store.CreateUser(username, email, string(encpw))
 	w.WriteHeader(http.StatusAccepted)
+}
+
+func (u *UserServer) loginUser(w http.ResponseWriter, r *http.Request) {
+	var payload User
+
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		http.Error(w, "failed to decode JSON payload", http.StatusBadRequest)
+		return
+	}
+
+	username := string(payload.Username)
+	password := string(payload.Password)
+
+	if !u.verifyCredentials(username, password) {
+		w.WriteHeader(http.StatusBadRequest) // check if it's ok
+		return
+	}
+
+	w.WriteHeader(http.StatusAccepted)
+}
+
+func (u *UserServer) verifyCredentials(username, password string) bool {
+	user, _ := u.store.GetUserByUsername(username)
+	bcrypt.CompareHashAndPassword([]byte(password), []byte(user.Password))
+
+	return true
 }

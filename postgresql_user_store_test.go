@@ -52,10 +52,10 @@ func TestDatabase(t *testing.T) {
 	t.Run("returns Mark id", func(t *testing.T) {
 		username := "Mark"
 
-		got, err := store.GetUserByName(username)
+		got, err := store.GetUserByUsername(username)
 		want := 1
 
-		assertEqual(t, got, want)
+		assertEqual(t, got.ID, want)
 		assertNoError(t, err)
 	})
 	t.Run("stores new squeak for Mark", func(t *testing.T) {
@@ -102,8 +102,8 @@ func TestDatabase(t *testing.T) {
 
 		got, err := store.GetUserbase()
 		want := []User{
-			{"Mark", "test", "test", []string{"I don't believe it!"}},
-			{"Harrison", "test2", "test2", []string{"Great, kid, don't get cocky.", "Laugh it up, fuzzball!"}},
+			{1, "Mark", "test", "test", []string{"I don't believe it!"}},
+			{2, "Harrison", "test2", "test2", []string{"Great, kid, don't get cocky.", "Laugh it up, fuzzball!"}},
 		}
 
 		if !reflect.DeepEqual(got, want) {

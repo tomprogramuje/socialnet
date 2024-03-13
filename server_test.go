@@ -14,8 +14,8 @@ import (
 
 type StubUserStore struct {
 	// Squeaks are Gopher's variant of tweets
-	squeaks    map[string][]string
-	userbase   []User
+	squeaks  map[string][]string
+	userbase []User
 }
 
 func (s *StubUserStore) GetUserSqueaks(name string) ([]string, error) {
@@ -37,8 +37,19 @@ func (s *StubUserStore) GetUserbase() ([]User, error) {
 }
 
 func (s *StubUserStore) CreateUser(name, email, password string) (int, error) {
-	s.userbase = append(s.userbase, User{name, email, password, []string{}})
-	return 0, nil
+	id := len(s.userbase) + 1
+	s.userbase = append(s.userbase, User{id, name, email, password, []string{}})
+	return id, nil
+}
+
+func (s *StubUserStore) GetUserByUsername(username string) (*User, error) {
+	var user User
+	for i := range s.userbase {
+		if s.userbase[i].Username == username {
+			user = s.userbase[i]
+		}
+	}
+	return &user, nil
 }
 
 func TestStoreNewSqueaks(t *testing.T) {
@@ -56,7 +67,7 @@ func TestStoreNewSqueaks(t *testing.T) {
 
 		request := newPostSqueakRequest("Mark", body)
 		response := httptest.NewRecorder()
-	
+
 		server.ServeHTTP(response, request)
 
 		assertStatus(t, response.Code, http.StatusAccepted)
@@ -128,9 +139,9 @@ func TestUserbase(t *testing.T) {
 
 	t.Run("it returns the user base as JSON", func(t *testing.T) {
 		wantedUserbase := []User{
-			{"Mark", "", "", []string{"I don't believe it!"}},
-			{"Harrison", "", "", []string{"I have a bad feeling about this.", "Great, kid, don't get cocky."}},
-			{"Carrie", "", "", []string{"Will somebody get this big walking carpet out of my way?"}},
+			{1, "Mark", "", "", []string{"I don't believe it!"}},
+			{2, "Harrison", "", "", []string{"I have a bad feeling about this.", "Great, kid, don't get cocky."}},
+			{3, "Carrie", "", "", []string{"Will somebody get this big walking carpet out of my way?"}},
 		}
 
 		store := StubUserStore{nil, wantedUserbase}
@@ -165,7 +176,7 @@ func TestAuthentication(t *testing.T) {
 		server.ServeHTTP(response, request)
 
 		assertStatus(t, response.Code, http.StatusAccepted)
-		
+
 		request = newUserbaseRequest()
 		response = httptest.NewRecorder()
 
@@ -173,9 +184,17 @@ func TestAuthentication(t *testing.T) {
 
 		got := getUserbaseFromResponse(t, response.Body)
 		want := []User{
-			{"Carrie", "test", "test", []string{}},
+			{1, "Carrie", "test", "", []string{}},
 		}
-		
+
+		if len(got) != len(want) {
+			t.Errorf("got %v users want %v users", len(got), len(want))
+		}
+
+		for i := range got {
+			got[i].Password = ""
+		}
+
 		assertUserbase(t, got, want)
 	})
 	t.Run("password successfully verified", func(t *testing.T) {

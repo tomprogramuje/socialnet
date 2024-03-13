@@ -88,30 +88,30 @@ func (s *PostgreSQLUserStore) GetUserByID(id int) (string, error) {
 	return name, nil
 }
 
-func (s *PostgreSQLUserStore) GetUserByName(username string) (int, error) {
-	query := `SELECT id FROM "user"	WHERE username = $1`
+func (s *PostgreSQLUserStore) GetUserByUsername(username string) (*User, error) {
+	query := `SELECT * FROM "user"	WHERE username = $1`
 
-	var id int
-	err := s.db.QueryRow(query, username).Scan(&id)
+	user := new(User)
+	err := s.db.QueryRow(query, username).Scan(&user.ID, &user.Username, &user.Email, &user.Password)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return 0, fmt.Errorf("no user with that username (%s) found", username)
+			return nil, fmt.Errorf("no user with that username (%s) found", username)
 		}
-		return 0, fmt.Errorf("GetUserByName: %w", err)
+		return nil, fmt.Errorf("GetUserByName: %w", err)
 	}
 
-	return id, nil
+	return user, nil
 }
 
 func (s *PostgreSQLUserStore) PostSqueak(name, squeak string) (int, error) {
-	user_id, err := s.GetUserByName(name)
+	user, err := s.GetUserByUsername(name)
 	if err != nil {
 		return 0, fmt.Errorf("error trying to post new squeak: %s", err)
 	}
 	query := `INSERT INTO squeak (user_id, text) VALUES ($1, $2) RETURNING id`
 
 	var id int
-	err = s.db.QueryRow(query, user_id, squeak).Scan(&id)
+	err = s.db.QueryRow(query, user.ID, squeak).Scan(&id)
 	if err != nil {
 		return 0, fmt.Errorf("PostSqueak: %w", err)
 	}
@@ -120,14 +120,14 @@ func (s *PostgreSQLUserStore) PostSqueak(name, squeak string) (int, error) {
 }
 
 func (s *PostgreSQLUserStore) GetUserSqueaks(username string) ([]string, error) {
-	user_id, err := s.GetUserByName(username)
+	user, err := s.GetUserByUsername(username)
 	if err != nil {
 		return nil, fmt.Errorf("no user with that username (%s) found", username)
 	}
 	query := `SELECT text FROM squeak WHERE user_id = $1`
 
 	var squeaks []string
-	rows, err := s.db.Query(query, user_id)
+	rows, err := s.db.Query(query, user.ID)
 	if err != nil {
 		return nil, fmt.Errorf("GetUserSqueaks: %w", err)
 	}
@@ -150,7 +150,7 @@ func (s *PostgreSQLUserStore) GetUserSqueaks(username string) ([]string, error) 
 }
 
 func (s *PostgreSQLUserStore) GetUserbase() ([]User, error) {
-	query := `SELECT username, email, password, text FROM "user" u JOIN "squeak" s 
+	query := `SELECT u.id, username, email, password, text FROM "user" u JOIN "squeak" s 
 		ON u.id = s.user_id ORDER BY u.id, s.id;`
 
 	rows, err := s.db.Query(query)
@@ -161,14 +161,15 @@ func (s *PostgreSQLUserStore) GetUserbase() ([]User, error) {
 	var userbase []User
 
 	for rows.Next() {
-		var username, email, password, squeak string
-		if err := rows.Scan(&username, &email, &password, &squeak); err != nil {
+		user := new(User)
+		var squeak string
+		if err := rows.Scan(&user.ID, &user.Username, &user.Email, &user.Password, &squeak); err != nil {
 			return nil, fmt.Errorf("GetUserbase: %w", err)
 		}
 
 		userExists := false
 		for i := range userbase {
-			if userbase[i].Username == username {
+			if userbase[i].Username == user.Username {
 				userbase[i].Squeaks = append(userbase[i].Squeaks, squeak)
 				userExists = true
 				break
@@ -176,7 +177,7 @@ func (s *PostgreSQLUserStore) GetUserbase() ([]User, error) {
 		}
 
 		if !userExists {
-			userbase = append(userbase, User{Username: username, Email: email, Password: password, Squeaks: []string{squeak}})
+			userbase = append(userbase, User{ID: user.ID, Username: user.Username, Email: user.Email, Password: user.Password, Squeaks: []string{squeak}})
 		}
 	}
 

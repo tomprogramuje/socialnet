@@ -18,15 +18,15 @@ func TestPostingSqueaksAndRetrievingThem(t *testing.T) {
 		body := []byte(`{
 			"username": "Harrison", "email": "test", "password": "test"
 		}`)
-		
+
 		request, _ := http.NewRequest(http.MethodPost, "/register", bytes.NewBuffer(body))
 		server.ServeHTTP(httptest.NewRecorder(), request)
 
-		got, err := testStore.GetUserByName("Harrison")
+		got, err := testStore.GetUserByUsername("Harrison")
 		want := 1
 
-		if got != want {
-			t.Errorf("got %d want %d", got, want)
+		if got.ID != want {
+			t.Errorf("got %d want %d", got.ID, want)
 		}
 		assertNoError(t, err)
 	})
@@ -62,7 +62,15 @@ func TestPostingSqueaksAndRetrievingThem(t *testing.T) {
 
 		got := getUserbaseFromResponse(t, response.Body)
 		want := []User{
-			{"Harrison", "test", "test", []string{"Great, kid, don't get cocky.", "Laugh it up, fuzzball!"}},
+			{1, "Harrison", "test", "", []string{"Great, kid, don't get cocky.", "Laugh it up, fuzzball!"}},
+		}
+
+		if len(got) != len(want) {
+			t.Errorf("got %v users want %v users", len(got), len(want))
+		}
+
+		for i := range got {
+			got[i].Password = ""
 		}
 
 		assertUserbase(t, got, want)
