@@ -33,12 +33,12 @@ func TestPostingSqueaksAndRetrievingThem(t *testing.T) {
 	t.Run("save squeaks for Harrison", func(t *testing.T) {
 		response := httptest.NewRecorder()
 		body := []byte(`
-		{"name": "Harrison", "squeaks": ["Great, kid, don't get cocky."]}	
+		{"squeak": "Great, kid, don't get cocky."}	
 		`)
 		server.ServeHTTP(response, newPostSqueakRequest("Harrison", body))
 
 		body = []byte(`
-			{"name": "Harrison", "squeaks": ["Laugh it up, fuzzball!"]}	
+			{"squeak": "Laugh it up, fuzzball!"}	
 		`)
 		server.ServeHTTP(response, newPostSqueakRequest("Harrison", body))
 

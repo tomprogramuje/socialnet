@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -14,11 +15,15 @@ type UserServer struct {
 }
 
 type User struct {
-	ID       int
-	Username string
-	Email    string
-	Password string
-	Squeaks  []string
+	ID       int      `json:"id"`
+	Username string   `json:"username"`
+	Email    string   `json:"email"`
+	Password string   `json:"password"`
+	Squeaks  []string `json:"squeaks"`
+}
+
+type SqueakPost struct {
+	Squeak string
 }
 
 func NewUserServer(store UserStore) *UserServer {
@@ -81,17 +86,20 @@ func (u *UserServer) showSqueaks(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *UserServer) saveSqueak(w http.ResponseWriter, r *http.Request) {
-	user := r.PathValue("name")
-	var payload User
+	username := r.PathValue("name")
+	var payload SqueakPost
 
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 		http.Error(w, "failed to decode JSON payload", http.StatusBadRequest)
 		return
 	}
 
-	squeak := string(payload.Squeaks[0])
+	squeak := string(payload.Squeak)
 
-	u.store.PostSqueak(user, squeak)
+	_, err := u.store.PostSqueak(username, squeak)
+	if err != nil {
+		log.Println(err)
+	}
 	w.WriteHeader(http.StatusAccepted)
 }
 
@@ -127,17 +135,24 @@ func (u *UserServer) loginUser(w http.ResponseWriter, r *http.Request) {
 	username := string(payload.Username)
 	password := string(payload.Password)
 
-	if !u.verifyCredentials(username, password) {
-		w.WriteHeader(http.StatusBadRequest) // check if it's ok
-		return
+	success, err := u.verifyCredentials(username, password)
+	if !success {
+		w.WriteHeader(http.StatusBadRequest)
+		log.Println(err)
 	}
 
 	w.WriteHeader(http.StatusAccepted)
 }
 
-func (u *UserServer) verifyCredentials(username, password string) bool {
-	user, _ := u.store.GetUserByUsername(username)
-	bcrypt.CompareHashAndPassword([]byte(password), []byte(user.Password))
+func (u *UserServer) verifyCredentials(username, password string) (bool, error) {
+	user, err := u.store.GetUserByUsername(username)
+	if err != nil {
+		return false, fmt.Errorf("verifyCredentials: %w", err)
+	}
 
-	return true
+	if err := bcrypt.CompareHashAndPassword([]byte(password), []byte(user.Password)); err != nil {
+		log.Println(err)
+	}
+
+	return true, nil
 }
