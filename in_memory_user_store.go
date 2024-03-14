@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 func NewInMemoryUserStore() *InMemoryUserStore {
 	return &InMemoryUserStore{map[string][]string{}}
@@ -33,7 +36,7 @@ func (i *InMemoryUserStore) PostSqueak(name, squeak string) (int, error) {
 func (i *InMemoryUserStore) GetUserbase() ([]User, error) {
 	var userbase []User
 	for name, squeaks := range i.store {
-		userbase = append(userbase, User{1, name, "", "", squeaks})
+		userbase = append(userbase, User{1, name, "", "", squeaks, time.Now()})
 	}
 	return userbase, nil
 }

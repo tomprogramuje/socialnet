@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -15,15 +16,17 @@ type UserServer struct {
 }
 
 type User struct {
-	ID       int      `json:"id"`
-	Username string   `json:"username"`
-	Email    string   `json:"email"`
-	Password string   `json:"password"`
-	Squeaks  []string `json:"squeaks"`
+	ID        int       `json:"id"`
+	Username  string    `json:"username"`
+	Email     string    `json:"email"`
+	Password  string    `json:"password"`
+	Squeaks   []string  `json:"squeaks"` // make it []SqueakPost
+	CreatedAt time.Time `json:"createdAt"`
 }
 
 type SqueakPost struct {
-	Squeak string
+	Text      string	`json:"text"`
+	CreatedAt time.Time	`json:"createdAt"`
 }
 
 func NewUserServer(store UserStore) *UserServer {
@@ -87,16 +90,14 @@ func (u *UserServer) showSqueaks(w http.ResponseWriter, r *http.Request) {
 
 func (u *UserServer) saveSqueak(w http.ResponseWriter, r *http.Request) {
 	username := r.PathValue("name")
-	var payload SqueakPost
+	var squeak SqueakPost
 
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&squeak); err != nil {
 		http.Error(w, "failed to decode JSON payload", http.StatusBadRequest)
 		return
 	}
 
-	squeak := string(payload.Squeak)
-
-	_, err := u.store.PostSqueak(username, squeak)
+	_, err := u.store.PostSqueak(username, squeak.Text)
 	if err != nil {
 		log.Println(err)
 	}
@@ -104,23 +105,19 @@ func (u *UserServer) saveSqueak(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *UserServer) registerUser(w http.ResponseWriter, r *http.Request) {
-	var payload User
+	var user User
 
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		http.Error(w, "failed to decode JSON payload", http.StatusBadRequest)
 		return
 	}
 
-	username := string(payload.Username)
-	email := string(payload.Email)
-	password := string(payload.Password)
-
-	encpw, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	encpw, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
 		http.Error(w, "failed hashing the password", http.StatusInternalServerError)
 	}
 
-	u.store.CreateUser(username, email, string(encpw))
+	u.store.CreateUser(user.Username, user.Email, string(encpw))
 	w.WriteHeader(http.StatusAccepted)
 }
 
@@ -139,6 +136,7 @@ func (u *UserServer) loginUser(w http.ResponseWriter, r *http.Request) {
 	if !success {
 		w.WriteHeader(http.StatusBadRequest)
 		log.Println(err)
+		return
 	}
 
 	w.WriteHeader(http.StatusAccepted)
@@ -150,8 +148,9 @@ func (u *UserServer) verifyCredentials(username, password string) (bool, error) 
 		return false, fmt.Errorf("verifyCredentials: %w", err)
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(password), []byte(user.Password)); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
 		log.Println(err)
+		return false, nil
 	}
 
 	return true, nil

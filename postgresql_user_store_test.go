@@ -2,9 +2,8 @@ package main
 
 import (
 	"fmt"
-	"reflect"
-	"slices"
 	"testing"
+	"time"
 
 	_ "github.com/lib/pq"
 )
@@ -102,41 +101,11 @@ func TestDatabase(t *testing.T) {
 
 		got, err := store.GetUserbase()
 		want := []User{
-			{1, "Mark", "test", "test", []string{"I don't believe it!"}},
-			{2, "Harrison", "test2", "test2", []string{"Great, kid, don't get cocky.", "Laugh it up, fuzzball!"}},
+			{1, "Mark", "test", "test", []string{"I don't believe it!"}, time.Now()},
+			{2, "Harrison", "test2", "test2", []string{"Great, kid, don't get cocky.", "Laugh it up, fuzzball!"}, time.Now()},
 		}
 
-		if !reflect.DeepEqual(got, want) {
-			t.Errorf("got %v want %v", got, want)
-		}
+		assertUserbase(t, got, want)
 		assertNoError(t, err)
 	})
-}
-
-func assertEqual[V comparable](t testing.TB, got, want V) {
-	t.Helper()
-	if got != want {
-		t.Error("returned value differs from expected value, got", got, "want", want)
-	}
-}
-
-func assertSqueaks(t testing.TB, got, want []string) {
-	t.Helper()
-	if !slices.Equal(got, want) {
-		t.Errorf("did not get correct response, got %s, want %s", got, want)
-	}
-}
-
-func assertError(t testing.TB, got, want string) {
-	t.Helper()
-	if got != want {
-		t.Errorf("got %q back, but wanted %q", got, want)
-	}
-}
-
-func assertNoError(t testing.TB, err error) {
-	t.Helper()
-	if err != nil {
-		t.Fatalf("didn't expect an error but got one, %v", err)
-	}
 }

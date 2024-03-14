@@ -2,14 +2,11 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
-	"slices"
 	"testing"
+	"time"
 )
 
 type StubUserStore struct {
@@ -18,7 +15,7 @@ type StubUserStore struct {
 
 func (s *StubUserStore) CreateUser(name, email, password string) (int, error) {
 	id := len(s.userbase) + 1
-	s.userbase = append(s.userbase, User{id, name, email, password, []string{}})
+	s.userbase = append(s.userbase, User{id, name, email, password, []string{}, time.Now()})
 	return id, nil
 }
 
@@ -30,7 +27,7 @@ func (s *StubUserStore) GetUserByUsername(username string) (*User, error) {
 			return user, nil
 		}
 	}
-	return nil, fmt.Errorf("no user with that username (%s)found", username )
+	return nil, fmt.Errorf("no user with that username (%s)found", username)
 }
 
 func (s *StubUserStore) PostSqueak(username, squeak string) (int, error) {
@@ -62,8 +59,9 @@ func TestAuthentication(t *testing.T) {
 		body := []byte(`{
 			"username": "Carrie", 
 			"email": "test",
-			"password": "test"
+			"password": "testingit1"
 		}`)
+
 		request, _ := http.NewRequest(http.MethodPost, "/register", bytes.NewBuffer(body))
 		response := httptest.NewRecorder()
 
@@ -78,7 +76,7 @@ func TestAuthentication(t *testing.T) {
 
 		got := getUserbaseFromResponse(t, response.Body)
 		want := []User{
-			{1, "Carrie", "test", "", []string{}},
+			{1, "Carrie", "test", "", []string{}, time.Now()},
 		}
 
 		if len(got) != len(want) {
@@ -94,8 +92,9 @@ func TestAuthentication(t *testing.T) {
 	t.Run("password successfully verified", func(t *testing.T) {
 		body := []byte(`{
 			"username": "Carrie", 
-			"password": "test"
+			"password": "testingit1"
 		}`)
+
 		request, _ := http.NewRequest(http.MethodPost, "/login", bytes.NewBuffer(body))
 		response := httptest.NewRecorder()
 
@@ -116,13 +115,13 @@ func TestAuthentication(t *testing.T) {
 
 func TestStoreNewSqueaks(t *testing.T) {
 	store := StubUserStore{
-		[]User{{1, "Mark", "", "", []string{}}},
+		[]User{{1, "Mark", "", "", []string{}, time.Now()}},
 	}
 	server := NewUserServer(&store)
 
 	t.Run("it saves squeak on POST", func(t *testing.T) {
 		body := []byte(`{
-			"squeak": "Let go of your hate."
+			"text": "Let go of your hate."
 		}`)
 
 		request := newPostSqueakRequest("Mark", body)
@@ -146,16 +145,11 @@ func TestStoreNewSqueaks(t *testing.T) {
 	})
 }
 
-func newPostSqueakRequest(name string, body []byte) *http.Request {
-	req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("/users/%s", name), bytes.NewBuffer(body))
-	return req
-}
-
 func TestGETSqueaks(t *testing.T) {
 	store := StubUserStore{
 		[]User{
-			{1, "Mark", "", "", []string{"I don't believe it!"}},
-			{2, "Harrison", "", "", []string{"Great, kid, don't get cocky.", "Laugh it up, fuzzball!"}},
+			{1, "Mark", "", "", []string{"I don't believe it!"}, time.Now()},
+			{2, "Harrison", "", "", []string{"Great, kid, don't get cocky.", "Laugh it up, fuzzball!"}, time.Now()},
 		},
 	}
 	server := NewUserServer(&store)
@@ -198,9 +192,9 @@ func TestUserbase(t *testing.T) {
 
 	t.Run("it returns the user base as JSON", func(t *testing.T) {
 		wantedUserbase := []User{
-			{1, "Mark", "", "", []string{"I don't believe it!"}},
-			{2, "Harrison", "", "", []string{"I have a bad feeling about this.", "Great, kid, don't get cocky."}},
-			{3, "Carrie", "", "", []string{"Will somebody get this big walking carpet out of my way?"}},
+			{1, "Mark", "", "", []string{"I don't believe it!"}, time.Now()},
+			{2, "Harrison", "", "", []string{"I have a bad feeling about this.", "Great, kid, don't get cocky."}, time.Now()},
+			{3, "Carrie", "", "", []string{"Will somebody get this big walking carpet out of my way?"}, time.Now()},
 		}
 
 		store := StubUserStore{wantedUserbase}
@@ -217,64 +211,4 @@ func TestUserbase(t *testing.T) {
 		assertUserbase(t, got, wantedUserbase)
 		assertContentType(t, response, jsonContentType)
 	})
-}
-
-func newGetSqueakRequest(name string) *http.Request {
-	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/users/%s", name), nil)
-	return req
-}
-
-func newUserbaseRequest() *http.Request {
-	req, _ := http.NewRequest(http.MethodGet, "/userbase", nil)
-	return req
-}
-
-func getUserbaseFromResponse(t testing.TB, body io.Reader) (userbase []User) {
-	t.Helper()
-
-	err := json.NewDecoder(body).Decode(&userbase)
-	if err != nil {
-		t.Fatalf("Unable to parse response from server %q into slice of User, '%v'", body, err)
-	}
-
-	return
-}
-
-func getUserSqueaksFromResponse(t testing.TB, body io.Reader) (userSqueaks []string) {
-	t.Helper()
-
-	err := json.NewDecoder(body).Decode(&userSqueaks)
-	if err != nil {
-		t.Fatalf("Unable to parse response from server %q into slice of string, '%v'", body, err)
-	}
-
-	return
-}
-
-func assertResponse(t testing.TB, got, want []string) {
-	t.Helper()
-	if !slices.Equal(got, want) {
-		t.Errorf("response is wrong, got %q, want %q", got, want)
-	}
-}
-
-func assertStatus(t testing.TB, got, want int) {
-	t.Helper()
-	if got != want {
-		t.Errorf("did not get the correct status, got %d, want %d", got, want)
-	}
-}
-
-func assertUserbase(t testing.TB, got, want []User) {
-	t.Helper()
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v want %v", got, want)
-	}
-}
-
-func assertContentType(t testing.TB, response *httptest.ResponseRecorder, want string) {
-	t.Helper()
-	if response.Result().Header.Get("content-type") != want {
-		t.Errorf("response did not have content-type of %s, got %v", want, response.Result().Header)
-	}
 }

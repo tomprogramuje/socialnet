@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 func TestPostingSqueaksAndRetrievingThem(t *testing.T) {
@@ -33,12 +34,12 @@ func TestPostingSqueaksAndRetrievingThem(t *testing.T) {
 	t.Run("save squeaks for Harrison", func(t *testing.T) {
 		response := httptest.NewRecorder()
 		body := []byte(`
-		{"squeak": "Great, kid, don't get cocky."}	
+		{"text": "Great, kid, don't get cocky."}	
 		`)
 		server.ServeHTTP(response, newPostSqueakRequest("Harrison", body))
 
 		body = []byte(`
-			{"squeak": "Laugh it up, fuzzball!"}	
+			{"text": "Laugh it up, fuzzball!"}	
 		`)
 		server.ServeHTTP(response, newPostSqueakRequest("Harrison", body))
 
@@ -62,7 +63,7 @@ func TestPostingSqueaksAndRetrievingThem(t *testing.T) {
 
 		got := getUserbaseFromResponse(t, response.Body)
 		want := []User{
-			{1, "Harrison", "test", "", []string{"Great, kid, don't get cocky.", "Laugh it up, fuzzball!"}},
+			{1, "Harrison", "test", "", []string{"Great, kid, don't get cocky.", "Laugh it up, fuzzball!"}, time.Now()},
 		}
 
 		if len(got) != len(want) {

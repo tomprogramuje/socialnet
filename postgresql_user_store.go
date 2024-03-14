@@ -16,7 +16,7 @@ func initializeDatabase(db *sql.DB) {
 		id SERIAL PRIMARY KEY,
 		username VARCHAR(100) UNIQUE NOT NULL,
 		email VARCHAR(100) UNIQUE NOT NULL,
-		password VARCHAR(100) NOT NULL
+		password VARCHAR(60) NOT NULL
 	);
 	CREATE TABLE IF NOT EXISTS "squeak" (
 		id SERIAL PRIMARY KEY,
