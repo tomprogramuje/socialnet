@@ -5,23 +5,26 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"time"
 
 	_ "github.com/lib/pq"
 )
 
 const connStrProd = "postgres://postgres:1234@localhost:5432/postgres?sslmode=disable"
 
-func initializeDatabase(db *sql.DB) {
+func initializeDatabase(db *sql.DB) { //add createdAt fields
 	query := `CREATE TABLE IF NOT EXISTS "user" (
 		id SERIAL PRIMARY KEY,
 		username VARCHAR(100) UNIQUE NOT NULL,
 		email VARCHAR(100) UNIQUE NOT NULL,
-		password VARCHAR(60) NOT NULL
+		password VARCHAR(60) NOT NULL,
+		createdAt TIMESTAMP
 	);
 	CREATE TABLE IF NOT EXISTS "squeak" (
 		id SERIAL PRIMARY KEY,
 		user_id INT,
 		text VARCHAR(255),
+		createdAt TIMESTAMP,
 		FOREIGN KEY (user_id) REFERENCES "user"(id)
 	)`
 
@@ -62,10 +65,10 @@ func NewPostgreSQLConnection(dsName string) *sql.DB {
 }
 
 func (s *PostgreSQLUserStore) CreateUser(username, email, password string) (int, error) {
-	query := `INSERT INTO "user" (username, email, password) VALUES ($1, $2, $3) RETURNING id`
+	query := `INSERT INTO "user" (username, email, password, createdAt) VALUES ($1, $2, $3, $4) RETURNING id`
 
 	var id int
-	err := s.db.QueryRow(query, username, email, password).Scan(&id)
+	err := s.db.QueryRow(query, username, email, password, time.Now()).Scan(&id)
 	if err != nil {
 		return 0, fmt.Errorf("CreateUser: %w", err)
 	}
@@ -92,7 +95,7 @@ func (s *PostgreSQLUserStore) GetUserByUsername(username string) (*User, error) 
 	query := `SELECT * FROM "user"	WHERE username = $1`
 
 	user := new(User)
-	err := s.db.QueryRow(query, username).Scan(&user.ID, &user.Username, &user.Email, &user.Password)
+	err := s.db.QueryRow(query, username).Scan(&user.ID, &user.Username, &user.Email, &user.Password, &user.CreatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("no user with that username (%s) found", username)
