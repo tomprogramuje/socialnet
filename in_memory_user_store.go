@@ -6,14 +6,14 @@ import (
 )
 
 func NewInMemoryUserStore() *InMemoryUserStore {
-	return &InMemoryUserStore{map[string][]string{}}
+	return &InMemoryUserStore{map[string][]SqueakPost{}}
 }
 
 type InMemoryUserStore struct {
-	store map[string][]string
+	store map[string][]SqueakPost
 }
 
-func (i *InMemoryUserStore) GetUserSqueaks(name string) ([]string, error) {
+func (i *InMemoryUserStore) GetUserSqueaks(name string) ([]SqueakPost, error) {
 	squeaks, ok := i.store[name]
 	if !ok {
 		return nil, fmt.Errorf("no squeaks found for %s", name)
@@ -25,10 +25,10 @@ func (i *InMemoryUserStore) GetUserSqueaks(name string) ([]string, error) {
 func (i *InMemoryUserStore) PostSqueak(name, squeak string) (int, error) {
 	_, ok := i.store[name]
 	if !ok {
-		i.store[name] = []string{squeak}
+		i.store[name] = []SqueakPost{{squeak, time.Now()}}
 		return 0, nil
 	} else {
-		i.store[name] = append(i.store[name], squeak)
+		i.store[name] = append(i.store[name], SqueakPost{squeak, time.Now()})
 		return 1, nil
 	}
 }

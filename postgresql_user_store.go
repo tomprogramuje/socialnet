@@ -111,10 +111,10 @@ func (s *PostgreSQLUserStore) PostSqueak(name, squeak string) (int, error) {
 	if err != nil {
 		return 0, fmt.Errorf("error trying to post new squeak: %s", err)
 	}
-	query := `INSERT INTO squeak (user_id, text) VALUES ($1, $2) RETURNING id`
+	query := `INSERT INTO squeak (user_id, text, createdAt) VALUES ($1, $2, $3) RETURNING id`
 
 	var id int
-	err = s.db.QueryRow(query, user.ID, squeak).Scan(&id)
+	err = s.db.QueryRow(query, user.ID, squeak, time.Now()).Scan(&id)
 	if err != nil {
 		return 0, fmt.Errorf("PostSqueak: %w", err)
 	}
@@ -122,14 +122,14 @@ func (s *PostgreSQLUserStore) PostSqueak(name, squeak string) (int, error) {
 	return id, nil
 }
 
-func (s *PostgreSQLUserStore) GetUserSqueaks(username string) ([]string, error) {
+func (s *PostgreSQLUserStore) GetUserSqueaks(username string) ([]SqueakPost, error) {
 	user, err := s.GetUserByUsername(username)
 	if err != nil {
 		return nil, fmt.Errorf("no user with that username (%s) found", username)
 	}
-	query := `SELECT text FROM squeak WHERE user_id = $1`
+	query := `SELECT text, createdAt FROM squeak WHERE user_id = $1`
 
-	var squeaks []string
+	var squeaks []SqueakPost
 	rows, err := s.db.Query(query, user.ID)
 	if err != nil {
 		return nil, fmt.Errorf("GetUserSqueaks: %w", err)
@@ -137,9 +137,9 @@ func (s *PostgreSQLUserStore) GetUserSqueaks(username string) ([]string, error) 
 
 	defer rows.Close()
 
-	var squeak string
+	var squeak SqueakPost
 	for rows.Next() {
-		if err := rows.Scan(&squeak); err != nil {
+		if err := rows.Scan(&squeak.Text, &squeak.CreatedAt); err != nil {
 			return nil, fmt.Errorf("GetUserSqueaks: %w", err)
 		}
 		squeaks = append(squeaks, squeak)
@@ -153,7 +153,7 @@ func (s *PostgreSQLUserStore) GetUserSqueaks(username string) ([]string, error) 
 }
 
 func (s *PostgreSQLUserStore) GetUserbase() ([]User, error) {
-	query := `SELECT u.id, username, email, password, text FROM "user" u JOIN "squeak" s 
+	query := `SELECT u.id, username, email, password, s.text, s.createdAt, u.createdAt FROM "user" u JOIN "squeak" s 
 		ON u.id = s.user_id ORDER BY u.id, s.id;`
 
 	rows, err := s.db.Query(query)
@@ -165,8 +165,8 @@ func (s *PostgreSQLUserStore) GetUserbase() ([]User, error) {
 
 	for rows.Next() {
 		user := new(User)
-		var squeak string
-		if err := rows.Scan(&user.ID, &user.Username, &user.Email, &user.Password, &squeak); err != nil {
+		var squeak SqueakPost
+		if err := rows.Scan(&user.ID, &user.Username, &user.Email, &user.Password, &squeak.Text, &squeak.CreatedAt, &user.CreatedAt); err != nil {
 			return nil, fmt.Errorf("GetUserbase: %w", err)
 		}
 
@@ -180,7 +180,7 @@ func (s *PostgreSQLUserStore) GetUserbase() ([]User, error) {
 		}
 
 		if !userExists {
-			userbase = append(userbase, User{ID: user.ID, Username: user.Username, Email: user.Email, Password: user.Password, Squeaks: []string{squeak}})
+			userbase = append(userbase, User{ID: user.ID, Username: user.Username, Email: user.Email, Password: user.Password, Squeaks: []SqueakPost{squeak}})
 		}
 	}
 

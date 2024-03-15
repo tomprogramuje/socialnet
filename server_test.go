@@ -15,7 +15,7 @@ type StubUserStore struct {
 
 func (s *StubUserStore) CreateUser(name, email, password string) (int, error) {
 	id := len(s.userbase) + 1
-	s.userbase = append(s.userbase, User{id, name, email, password, []string{}, time.Now()})
+	s.userbase = append(s.userbase, User{id, name, email, password, []SqueakPost{}, time.Now()})
 	return id, nil
 }
 
@@ -35,11 +35,11 @@ func (s *StubUserStore) PostSqueak(username, squeak string) (int, error) {
 	if err != nil {
 		return 0, fmt.Errorf("error getting user: %s", err)
 	}
-	user.Squeaks = append(user.Squeaks, squeak)
+	user.Squeaks = append(user.Squeaks, SqueakPost{squeak, time.Now()})
 	return user.ID, nil
 }
 
-func (s *StubUserStore) GetUserSqueaks(name string) ([]string, error) {
+func (s *StubUserStore) GetUserSqueaks(name string) ([]SqueakPost, error) {
 	user, err := s.GetUserByUsername(name)
 	if err != nil {
 		return nil, err
@@ -76,15 +76,7 @@ func TestAuthentication(t *testing.T) {
 
 		got := getUserbaseFromResponse(t, response.Body)
 		want := []User{
-			{1, "Carrie", "test", "", []string{}, time.Now()},
-		}
-
-		if len(got) != len(want) {
-			t.Errorf("got %v users want %v users", len(got), len(want))
-		}
-
-		for i := range got {
-			got[i].Password = ""
+			{1, "Carrie", "test", "", []SqueakPost{}, time.Now()},
 		}
 
 		assertUserbase(t, got, want)
@@ -115,7 +107,7 @@ func TestAuthentication(t *testing.T) {
 
 func TestStoreNewSqueaks(t *testing.T) {
 	store := StubUserStore{
-		[]User{{1, "Mark", "", "", []string{}, time.Now()}},
+		[]User{{1, "Mark", "", "", []SqueakPost{}, time.Now()}},
 	}
 	server := NewUserServer(&store)
 
@@ -140,7 +132,7 @@ func TestStoreNewSqueaks(t *testing.T) {
 
 		got, err := store.GetUserSqueaks("Mark")
 
-		assertResponse(t, got, []string{"Let go of your hate."})
+		assertResponse(t, got, []SqueakPost{{"Let go of your hate.", time.Now()}})
 		assertNoError(t, err)
 	})
 }
@@ -148,8 +140,8 @@ func TestStoreNewSqueaks(t *testing.T) {
 func TestGETSqueaks(t *testing.T) {
 	store := StubUserStore{
 		[]User{
-			{1, "Mark", "", "", []string{"I don't believe it!"}, time.Now()},
-			{2, "Harrison", "", "", []string{"Great, kid, don't get cocky.", "Laugh it up, fuzzball!"}, time.Now()},
+			{1, "Mark", "", "", []SqueakPost{{"I don't believe it!", time.Now()}}, time.Now()},
+			{2, "Harrison", "", "", []SqueakPost{{"Great, kid, don't get cocky.", time.Now()}, {"Laugh it up, fuzzball!", time.Now()}}, time.Now()},
 		},
 	}
 	server := NewUserServer(&store)
@@ -163,7 +155,7 @@ func TestGETSqueaks(t *testing.T) {
 		got := getUserSqueaksFromResponse(t, response.Body)
 
 		assertStatus(t, response.Code, http.StatusOK)
-		assertResponse(t, got, []string{"I don't believe it!"})
+		assertResponse(t, got, []SqueakPost{{"I don't believe it!", time.Now()}})
 		assertContentType(t, response, jsonContentType)
 	})
 	t.Run("returns Harrison's squeaks", func(t *testing.T) {
@@ -175,7 +167,7 @@ func TestGETSqueaks(t *testing.T) {
 		got := getUserSqueaksFromResponse(t, response.Body)
 
 		assertStatus(t, response.Code, http.StatusOK)
-		assertResponse(t, got, []string{"Great, kid, don't get cocky.", "Laugh it up, fuzzball!"})
+		assertResponse(t, got, []SqueakPost{{"Great, kid, don't get cocky.", time.Now()}, {"Laugh it up, fuzzball!", time.Now()}})
 		assertContentType(t, response, jsonContentType)
 	})
 	t.Run("returns 404 on missing user", func(t *testing.T) {
@@ -192,9 +184,9 @@ func TestUserbase(t *testing.T) {
 
 	t.Run("it returns the user base as JSON", func(t *testing.T) {
 		wantedUserbase := []User{
-			{1, "Mark", "", "", []string{"I don't believe it!"}, time.Now()},
-			{2, "Harrison", "", "", []string{"I have a bad feeling about this.", "Great, kid, don't get cocky."}, time.Now()},
-			{3, "Carrie", "", "", []string{"Will somebody get this big walking carpet out of my way?"}, time.Now()},
+			{1, "Mark", "", "", []SqueakPost{{"I don't believe it!", time.Now()}}, time.Now()},
+			{2, "Harrison", "", "", []SqueakPost{{"I have a bad feeling about this.", time.Now()}, {"Great, kid, don't get cocky.", time.Now()}}, time.Now()},
+			{3, "Carrie", "", "", []SqueakPost{{"Will somebody get this big walking carpet out of my way?", time.Now()}}, time.Now()},
 		}
 
 		store := StubUserStore{wantedUserbase}

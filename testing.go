@@ -7,8 +7,6 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
-	"slices"
 	"testing"
 )
 
@@ -38,7 +36,7 @@ func getUserbaseFromResponse(t testing.TB, body io.Reader) (userbase []User) {
 	return
 }
 
-func getUserSqueaksFromResponse(t testing.TB, body io.Reader) (userSqueaks []string) {
+func getUserSqueaksFromResponse(t testing.TB, body io.Reader) (userSqueaks []SqueakPost) {
 	t.Helper()
 
 	err := json.NewDecoder(body).Decode(&userSqueaks)
@@ -49,10 +47,17 @@ func getUserSqueaksFromResponse(t testing.TB, body io.Reader) (userSqueaks []str
 	return
 }
 
-func assertResponse(t testing.TB, got, want []string) {
+func assertResponse(t testing.TB, got, want []SqueakPost) {
 	t.Helper()
-	if !slices.Equal(got, want) {
-		t.Errorf("response is wrong, got %q, want %q", got, want)
+
+	if len(got) != len(want) {
+		t.Errorf("squeaks count mismatch: got %d want %d", len(got), len(want))
+	}
+
+	for i := range got {
+		if got[i].Text != want[i].Text {
+			t.Errorf("squeak's text at index %d does not match: got %+v, want %+v", i, got[i], want[i])
+		}
 	}
 }
 
@@ -74,11 +79,24 @@ func assertUserbase(t testing.TB, got, want []User) {
 		if got[i].ID != want[i].ID ||
 			got[i].Username != want[i].Username ||
 			got[i].Email != want[i].Email ||
-			got[i].Password != want[i].Password ||
-			!reflect.DeepEqual(got[i].Squeaks, want[i].Squeaks) {
-			t.Errorf("user at index %d does not match: got %+v, want %+v", i, got[i], want[i])
+			!squeaksEqual(got[i].Squeaks, want[i].Squeaks) {
+				t.Errorf("user at index %d does not match: got %+v, want %+v", i, got[i], want[i])
 		}
 	}
+}
+
+func squeaksEqual(got, want []SqueakPost) bool {
+	if len(got) != len(want) {
+		return false
+	}
+
+	for i := range got {
+		if got[i].Text != want[i].Text {
+			return false
+		}
+	}
+
+	return true
 }
 
 func assertContentType(t testing.TB, response *httptest.ResponseRecorder, want string) {
@@ -95,10 +113,17 @@ func assertEqual[V comparable](t testing.TB, got, want V) {
 	}
 }
 
-func assertSqueaks(t testing.TB, got, want []string) {
+func assertSqueaks(t testing.TB, got, want []SqueakPost) {
 	t.Helper()
-	if !slices.Equal(got, want) {
-		t.Errorf("did not get correct response, got %s, want %s", got, want)
+
+	if len(got) != len(want) {
+		t.Errorf("squeaks count mismatch: got %d want %d", len(got), len(want))
+	}
+
+	for i := range got {
+		if got[i].Text != want[i].Text {
+			t.Errorf("squeak's text at index %d does not match: got %+v, want %+v", i, got[i], want[i])
+		}
 	}
 }
 

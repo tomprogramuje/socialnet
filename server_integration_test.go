@@ -50,7 +50,7 @@ func TestPostingSqueaksAndRetrievingThem(t *testing.T) {
 		server.ServeHTTP(response, newGetSqueakRequest("Harrison"))
 
 		got := getUserSqueaksFromResponse(t, response.Body)
-		want := []string{"Great, kid, don't get cocky.", "Laugh it up, fuzzball!"}
+		want := []SqueakPost{{"Great, kid, don't get cocky.", time.Now()}, {"Laugh it up, fuzzball!", time.Now()}}
 
 		assertResponse(t, got, want)
 		assertStatus(t, response.Code, http.StatusOK)
@@ -63,7 +63,7 @@ func TestPostingSqueaksAndRetrievingThem(t *testing.T) {
 
 		got := getUserbaseFromResponse(t, response.Body)
 		want := []User{
-			{1, "Harrison", "test", "", []string{"Great, kid, don't get cocky.", "Laugh it up, fuzzball!"}, time.Now()},
+			{1, "Harrison", "test", "", []SqueakPost{{"Great, kid, don't get cocky.", time.Now()}, {"Laugh it up, fuzzball!", time.Now()}}, time.Now()},
 		}
 
 		if len(got) != len(want) {

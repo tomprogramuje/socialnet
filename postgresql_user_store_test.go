@@ -71,7 +71,7 @@ func TestDatabase(t *testing.T) {
 		username := "Mark"
 
 		got, err := store.GetUserSqueaks(username)
-		want := []string{"I don't believe it!"}
+		want := []SqueakPost{{"I don't believe it!", time.Now()}}
 
 		assertSqueaks(t, got, want)
 		assertNoError(t, err)
@@ -101,8 +101,8 @@ func TestDatabase(t *testing.T) {
 
 		got, err := store.GetUserbase()
 		want := []User{
-			{1, "Mark", "test", "test", []string{"I don't believe it!"}, time.Now()},
-			{2, "Harrison", "test2", "test2", []string{"Great, kid, don't get cocky.", "Laugh it up, fuzzball!"}, time.Now()},
+			{1, "Mark", "test", "test", []SqueakPost{{"I don't believe it!", time.Now()}}, time.Now()},
+			{2, "Harrison", "test2", "test2", []SqueakPost{{"Great, kid, don't get cocky.", time.Now()}, {"Laugh it up, fuzzball!", time.Now()}}, time.Now()},
 		}
 
 		assertUserbase(t, got, want)

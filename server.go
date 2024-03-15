@@ -16,17 +16,17 @@ type UserServer struct {
 }
 
 type User struct {
-	ID        int       `json:"id"`
-	Username  string    `json:"username"`
-	Email     string    `json:"email"`
-	Password  string    `json:"password"`
-	Squeaks   []string  `json:"squeaks"` // make it []SqueakPost
-	CreatedAt time.Time `json:"createdAt"`
+	ID        int          `json:"id"`
+	Username  string       `json:"username"`
+	Email     string       `json:"email"`
+	Password  string       `json:"password"`
+	Squeaks   []SqueakPost `json:"squeaks"` 
+	CreatedAt time.Time    `json:"createdAt"`
 }
 
 type SqueakPost struct {
-	Text      string	`json:"text"`
-	CreatedAt time.Time	`json:"createdAt"`
+	Text      string    `json:"text"`
+	CreatedAt time.Time `json:"createdAt"`
 }
 
 func NewUserServer(store UserStore) *UserServer {
@@ -48,7 +48,7 @@ func NewUserServer(store UserStore) *UserServer {
 
 type UserStore interface {
 	// Squeaks are Gopher's variant of tweets
-	GetUserSqueaks(name string) ([]string, error)
+	GetUserSqueaks(name string) ([]SqueakPost, error)
 	PostSqueak(name, squeak string) (int, error)
 	GetUserbase() ([]User, error)
 	CreateUser(name, email, password string) (int, error)
