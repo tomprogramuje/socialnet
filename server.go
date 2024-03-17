@@ -112,6 +112,17 @@ func (u *UserServer) registerUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	existingUser, err := u.store.GetUserByUsername(user.Username)
+	if err == nil {
+		if existingUser.Username == user.Username {
+			http.Error(w, "username already taken", http.StatusConflict)
+		}
+		if existingUser.Email == user.Email {
+			http.Error(w, "email already taken", http.StatusConflict)
+		}
+		return
+	}
+
 	encpw, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
 		http.Error(w, "failed hashing the password", http.StatusInternalServerError)
