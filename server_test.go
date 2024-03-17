@@ -27,7 +27,7 @@ func (s *StubUserStore) GetUserByUsername(username string) (*User, error) {
 			return user, nil
 		}
 	}
-	return nil, fmt.Errorf("no user with that username (%s)found", username)
+	return nil, fmt.Errorf("no user with that username (%s) found", username)
 }
 
 func (s *StubUserStore) PostSqueak(username, squeak string) (int, error) {
@@ -59,7 +59,7 @@ func TestAuthentication(t *testing.T) {
 		body := []byte(`{
 			"username": "Carrie", 
 			"email": "test",
-			"password": "testingit1"
+			"password": "test"
 		}`)
 
 		request, _ := http.NewRequest(http.MethodPost, "/register", bytes.NewBuffer(body))
@@ -84,7 +84,7 @@ func TestAuthentication(t *testing.T) {
 	t.Run("password successfully verified", func(t *testing.T) {
 		body := []byte(`{
 			"username": "Carrie", 
-			"password": "testingit1"
+			"password": "test"
 		}`)
 
 		request, _ := http.NewRequest(http.MethodPost, "/login", bytes.NewBuffer(body))
@@ -95,7 +95,21 @@ func TestAuthentication(t *testing.T) {
 		assertStatus(t, response.Code, http.StatusAccepted)
 	})
 	t.Run("username and email already taken", func(t *testing.T) {
+		body := []byte(`{
+			"username": "Carrie",
+			"email": "test",
+			"password": "test"
+		}`)
 
+		request, _ := http.NewRequest(http.MethodPost, "/register", bytes.NewReader(body))
+		response := httptest.NewRecorder()
+
+		server.ServeHTTP(response, request)
+
+		assertStatus(t, response.Code, http.StatusConflict)
+		assertError(t, response.Body.String(), `username already taken
+email already taken
+`)
 	})
 	t.Run("user succesfully logged in", func(t *testing.T) {
 

@@ -12,7 +12,7 @@ import (
 
 const connStrProd = "postgres://postgres:1234@localhost:5432/postgres?sslmode=disable"
 
-func initializeDatabase(db *sql.DB) { //add createdAt fields
+func initializeDatabase(db *sql.DB) { 
 	query := `CREATE TABLE IF NOT EXISTS "user" (
 		id SERIAL PRIMARY KEY,
 		username VARCHAR(100) UNIQUE NOT NULL,

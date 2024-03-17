@@ -117,7 +117,12 @@ func (u *UserServer) registerUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "failed hashing the password", http.StatusInternalServerError)
 	}
 
-	u.store.CreateUser(user.Username, user.Email, string(encpw))
+	_, err = u.store.CreateUser(user.Username, user.Email, string(encpw))
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
 	w.WriteHeader(http.StatusAccepted)
 }
 
