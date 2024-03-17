@@ -81,19 +81,6 @@ func TestAuthentication(t *testing.T) {
 
 		assertUserbase(t, got, want)
 	})
-	t.Run("password successfully verified", func(t *testing.T) {
-		body := []byte(`{
-			"username": "Carrie", 
-			"password": "test"
-		}`)
-
-		request, _ := http.NewRequest(http.MethodPost, "/login", bytes.NewBuffer(body))
-		response := httptest.NewRecorder()
-
-		server.ServeHTTP(response, request)
-
-		assertStatus(t, response.Code, http.StatusAccepted)
-	})
 	t.Run("username and email already taken", func(t *testing.T) {
 		body := []byte(`{
 			"username": "Carrie",
@@ -112,10 +99,30 @@ email already taken
 `)
 	})
 	t.Run("user succesfully logged in", func(t *testing.T) {
+		body := []byte(`{
+			"username": "Carrie", 
+			"password": "test"
+		}`)
 
+		request, _ := http.NewRequest(http.MethodPost, "/login", bytes.NewBuffer(body))
+		response := httptest.NewRecorder()
+
+		server.ServeHTTP(response, request)
+
+		assertStatus(t, response.Code, http.StatusAccepted)
 	})
 	t.Run("failed login", func(t *testing.T) {
+		body := []byte(`{
+			"username": "Carrie", 
+			"password": "badtest"
+		}`)
 
+		request, _ := http.NewRequest(http.MethodPost, "/login", bytes.NewReader(body))
+		response := httptest.NewRecorder()
+
+		server.ServeHTTP(response, request)
+
+		assertStatus(t, response.Code, http.StatusUnauthorized)
 	})
 }
 

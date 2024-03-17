@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -20,7 +19,7 @@ type User struct {
 	Username  string       `json:"username"`
 	Email     string       `json:"email"`
 	Password  string       `json:"password"`
-	Squeaks   []SqueakPost `json:"squeaks"` 
+	Squeaks   []SqueakPost `json:"squeaks"`
 	CreatedAt time.Time    `json:"createdAt"`
 }
 
@@ -148,26 +147,26 @@ func (u *UserServer) loginUser(w http.ResponseWriter, r *http.Request) {
 	username := string(payload.Username)
 	password := string(payload.Password)
 
-	success, err := u.verifyCredentials(username, password)
+	success := u.verifyCredentials(username, password)
 	if !success {
-		w.WriteHeader(http.StatusBadRequest)
-		log.Println(err)
+		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
 	w.WriteHeader(http.StatusAccepted)
 }
 
-func (u *UserServer) verifyCredentials(username, password string) (bool, error) {
+func (u *UserServer) verifyCredentials(username, password string) bool {
 	user, err := u.store.GetUserByUsername(username)
 	if err != nil {
-		return false, fmt.Errorf("verifyCredentials: %w", err)
+		log.Println("verifyCredentials: %w", err)
+		return false
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
 		log.Println(err)
-		return false, nil
+		return false
 	}
 
-	return true, nil
+	return true
 }
