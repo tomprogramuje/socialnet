@@ -49,19 +49,19 @@ func NewPostgreSQLUserStore(db *sql.DB) *PostgreSQLUserStore {
 	return &PostgreSQLUserStore{db: db}
 }
 
-func NewPostgreSQLConnection(dsName string) *sql.DB {
+func NewPostgreSQLConnection(dsName string) (*sql.DB, error) {
 
 	db, err := sql.Open("postgres", dsName)
 
 	if err != nil {
-		log.Fatalf("couldn't connect to database, %v", err)
+		return nil, fmt.Errorf("couldn't connect to database, %v", err)
 	}
 
 	if err = db.Ping(); err != nil {
-		log.Fatalf("couldn't verify database connection, %v", err)
+		return nil, fmt.Errorf("couldn't verify database connection, %v", err)
 	}
 
-	return db
+	return db, nil
 }
 
 func (s *PostgreSQLUserStore) CreateUser(username, email, password string) (int, error) {

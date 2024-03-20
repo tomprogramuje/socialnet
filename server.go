@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -23,6 +24,7 @@ type User struct {
 	CreatedAt time.Time    `json:"createdAt"`
 }
 
+// Squeaks are Gopher's variant of tweets
 type SqueakPost struct {
 	Text      string    `json:"text"`
 	CreatedAt time.Time `json:"createdAt"`
@@ -46,7 +48,6 @@ func NewUserServer(store UserStore) *UserServer {
 }
 
 type UserStore interface {
-	// Squeaks are Gopher's variant of tweets
 	GetUserSqueaks(name string) ([]SqueakPost, error)
 	PostSqueak(name, squeak string) (int, error)
 	GetUserbase() ([]User, error)
@@ -74,7 +75,7 @@ func (u *UserServer) showSqueaks(w http.ResponseWriter, r *http.Request) {
 	user := r.PathValue("name")
 	squeaks, err := u.store.GetUserSqueaks(user)
 	if err != nil {
-		log.Println(err)
+		http.Error(w, fmt.Sprint(err), http.StatusNotFound)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
