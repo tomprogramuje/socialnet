@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -154,6 +156,25 @@ func (u *UserServer) loginUser(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"sub": user.ID,
+		"exp": time.Now().Add(time.Hour * 24 * 30).Unix(),
+	})
+
+	tokenString, err := token.SignedString([]byte(os.Getenv("SECRET")))
+	if err != nil {
+		http.Error(w, "failed to create token", http.StatusBadRequest)
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "Authorization",
+		Value:    tokenString,
+		MaxAge:   int(time.Hour * 24 * 30),
+		Secure:   false,
+		HttpOnly: true,
+		SameSite: 2,
+	})
 
 	w.WriteHeader(http.StatusAccepted)
 }
