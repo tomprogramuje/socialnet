@@ -125,7 +125,7 @@ func (u *UserServer) registerUser(w http.ResponseWriter, r *http.Request) {
 
 	encpw, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
-		http.Error(w, "failed hashing the password", http.StatusInternalServerError) 
+		http.Error(w, "failed hashing the password", http.StatusInternalServerError)
 		return
 	}
 
@@ -139,15 +139,15 @@ func (u *UserServer) registerUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *UserServer) loginUser(w http.ResponseWriter, r *http.Request) {
-	var payload User
+	var user User
 
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		http.Error(w, "failed to decode JSON payload", http.StatusBadRequest)
 		return
 	}
 
-	username := string(payload.Username)
-	password := string(payload.Password)
+	username := string(user.Username)
+	password := string(user.Password)
 
 	success := u.verifyCredentials(username, password)
 	if !success {
@@ -158,7 +158,7 @@ func (u *UserServer) loginUser(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusAccepted)
 }
 
-func (u *UserServer) verifyCredentials(username, password string) bool { 
+func (u *UserServer) verifyCredentials(username, password string) bool {
 	user, err := u.store.GetUserByUsername(username)
 	if err != nil {
 		log.Println("verifyCredentials: %w", err)
