@@ -112,7 +112,6 @@ email already taken
 		assertStatus(t, response.Code, http.StatusAccepted)
 
 		token := response.Header().Get("Set-Cookie")
-		fmt.Println(token)
 
 		if token == "" {
 			t.Error("generated jwt is empty")

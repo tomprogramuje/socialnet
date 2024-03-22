@@ -10,6 +10,8 @@ import (
 	_ "github.com/lib/pq"
 )
 
+const connStrProd = "postgres://postgres:1234@localhost:5432/postgres?sslmode=disable"
+
 func initializeDatabase(db *sql.DB) { 
 	query := `CREATE TABLE IF NOT EXISTS "user" (
 		id SERIAL PRIMARY KEY,

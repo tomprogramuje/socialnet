@@ -3,11 +3,10 @@ package main
 import (
 	"log"
 	"net/http"
-	"os"
 )
 
 func main() {
-	db, err := NewPostgreSQLConnection(os.Getenv("CONN_STR_PROD"))
+	db, err := NewPostgreSQLConnection(connStrProd)
 	if err != nil {
 		log.Fatalf("problem securing connection to database: %v", err)
 	}

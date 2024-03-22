@@ -34,7 +34,39 @@ func TestPostingSqueaksAndRetrievingThem(t *testing.T) {
 		}
 		assertNoError(t, err)
 	})
-	t.Run("save squeaks for Harrison", func(t *testing.T) {
+	t.Run("save squeaks for Harrison without logging in", func(t *testing.T) {
+		response := httptest.NewRecorder()
+		body := []byte(`
+		{"text": "Great, kid, don't get cocky."}	
+		`)
+		server.ServeHTTP(response, newPostSqueakRequest("Harrison", body))
+
+		body = []byte(`
+			{"text": "Laugh it up, fuzzball!"}	
+		`)
+		server.ServeHTTP(response, newPostSqueakRequest("Harrison", body))
+
+		assertStatus(t, response.Code, http.StatusUnauthorized)
+	})
+	t.Run("logging in as Harrison", func(t *testing.T) {
+		body := []byte(`{
+			"username": "Harrison",
+			"password": "test"
+		}`)
+		request, _ := http.NewRequest(http.MethodPost, "/login", bytes.NewBuffer(body))
+		response := httptest.NewRecorder()
+		
+		server.ServeHTTP(response, request)
+
+		assertStatus(t, response.Code, http.StatusAccepted)
+
+		token := response.Header().Get("Set-Cookie") // refactor
+
+		if token == "" {
+			t.Error("generated jwt is empty")
+		}
+	})
+	t.Run("save squeaks for Harrison after successful login", func(t *testing.T) {
 		response := httptest.NewRecorder()
 		body := []byte(`
 		{"text": "Great, kid, don't get cocky."}	

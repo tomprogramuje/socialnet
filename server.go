@@ -167,14 +167,16 @@ func (u *UserServer) loginUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "failed to create token", http.StatusBadRequest)
 	}
 
-	http.SetCookie(w, &http.Cookie{
+	c := &http.Cookie{
 		Name:     "Authorization",
 		Value:    tokenString,
 		MaxAge:   int(time.Hour * 24 * 30),
 		Secure:   false,
 		HttpOnly: true,
-		SameSite: 2,
-	})
+		SameSite: http.SameSiteLaxMode,
+	}
+
+	http.SetCookie(w, c)
 
 	w.WriteHeader(http.StatusAccepted)
 }
