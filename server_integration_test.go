@@ -9,7 +9,10 @@ import (
 )
 
 func TestPostingSqueaksAndRetrievingThem(t *testing.T) {
-	db := NewPostgreSQLConnection(connStrTest)
+	db, err := NewPostgreSQLConnection(connStrTest)
+	if err != nil {
+		t.Fatal(err)
+	}
 	clearDatabase(db)
 	initializeDatabase(db)
 	testStore := NewPostgreSQLUserStore(db)

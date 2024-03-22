@@ -125,12 +125,13 @@ func (u *UserServer) registerUser(w http.ResponseWriter, r *http.Request) {
 
 	encpw, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
-		http.Error(w, "failed hashing the password", http.StatusInternalServerError)
+		http.Error(w, "failed hashing the password", http.StatusInternalServerError) 
+		return
 	}
 
 	_, err = u.store.CreateUser(user.Username, user.Email, string(encpw))
 	if err != nil {
-		log.Println(err)
+		http.Error(w, fmt.Sprintf("error creating user: %s", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -157,7 +158,7 @@ func (u *UserServer) loginUser(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusAccepted)
 }
 
-func (u *UserServer) verifyCredentials(username, password string) bool {
+func (u *UserServer) verifyCredentials(username, password string) bool { 
 	user, err := u.store.GetUserByUsername(username)
 	if err != nil {
 		log.Println("verifyCredentials: %w", err)

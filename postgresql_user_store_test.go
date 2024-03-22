@@ -12,7 +12,10 @@ const connStrTest = "postgres://postgres:1234@localhost:5432/test?sslmode=disabl
 
 func TestDatabase(t *testing.T) {
 
-	db := NewPostgreSQLConnection(connStrTest)
+	db, err := NewPostgreSQLConnection(connStrTest)
+	if err != nil {
+		t.Fatal(err)
+	}
 	clearDatabase(db)
 	initializeDatabase(db)
 
