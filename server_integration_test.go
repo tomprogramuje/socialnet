@@ -76,8 +76,7 @@ func TestPostingSqueaksAndRetrievingThem(t *testing.T) {
 		body := []byte(`
 			{"text": "Great, kid, don't get cocky."}	
 		`)
-		request, _ := http.NewRequest(http.MethodPost, "/users/Harrison", bytes.NewBuffer(body))
-		request.Header.Set("Cookie", "Authorization=" + jwtToken)
+		request := newPostSqueakRequestWithJWT("Harrison", body, jwtToken)
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
@@ -85,8 +84,7 @@ func TestPostingSqueaksAndRetrievingThem(t *testing.T) {
 		body = []byte(`
 			{"text": "Laugh it up, fuzzball!"}	
 		`)
-		request, _ = http.NewRequest(http.MethodPost, "/users/Harrison", bytes.NewBuffer(body))
-		request.Header.Set("Cookie", "Authorization=" + jwtToken)
+		request = newPostSqueakRequestWithJWT("Harrison", body, jwtToken)
 		response = httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)

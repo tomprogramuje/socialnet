@@ -15,6 +15,12 @@ func newPostSqueakRequest(name string, body []byte) *http.Request {
 	return req
 }
 
+func newPostSqueakRequestWithJWT(name string, body []byte, token string) *http.Request {
+	req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("/users/%s", name), bytes.NewBuffer(body))
+	req.Header.Set("Cookie", "Authorization=" + token)
+	return req
+}
+
 func newGetSqueakRequest(name string) *http.Request {
 	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/users/%s", name), nil)
 	return req
