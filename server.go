@@ -143,6 +143,21 @@ func (u *UserServer) registerUser(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusAccepted)
 }
 
+func (u *UserServer) verifyCredentials(username, password string) bool {
+	user, err := u.store.GetUserByUsername(username)
+	if err != nil {
+		log.Println("verifyCredentials: %w", err)
+		return false
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
+		log.Println(err)
+		return false
+	}
+
+	return true
+}
+
 func (u *UserServer) loginUser(w http.ResponseWriter, r *http.Request) {
 	var user User
 
@@ -214,21 +229,6 @@ func parseJWTToken(cookieValue string) (*CustomClaims, error) {
 	}
 
 	return claims, nil
-}
-
-func (u *UserServer) verifyCredentials(username, password string) bool {
-	user, err := u.store.GetUserByUsername(username)
-	if err != nil {
-		log.Println("verifyCredentials: %w", err)
-		return false
-	}
-
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
-		log.Println(err)
-		return false
-	}
-
-	return true
 }
 
 func (u *UserServer) requiresAuthentication(next http.Handler) http.Handler {
