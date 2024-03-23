@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -180,15 +181,39 @@ func (u *UserServer) loginUser(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusAccepted)
 }
 
+type CustomClaims struct {
+	Username string `json:"sub"`
+	jwt.RegisteredClaims
+}
+
 func generateJWTToken(username string) (string, error) {
-	claims := &jwt.MapClaims{
-		"sub": username,
-		"exp": time.Now().Add(time.Hour * 24 * 30).Unix(),
+	claims := &CustomClaims{
+		Username: username,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24 * 30)),
+		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	return token.SignedString([]byte(os.Getenv("SECRET")))
+}
+
+func parseJWTToken(cookieValue string) (*CustomClaims, error) {
+	claims := &CustomClaims{}
+
+	token, err := jwt.ParseWithClaims(cookieValue, claims, func(t *jwt.Token) (interface{}, error) {
+		return []byte(os.Getenv("SECRET")), nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if _, ok := token.Claims.(*CustomClaims); !ok || !token.Valid {
+		return nil, errors.New("invalid token")
+	}
+
+	return claims, nil
 }
 
 func (u *UserServer) verifyCredentials(username, password string) bool {
@@ -215,33 +240,27 @@ func (u *UserServer) requiresAuthentication(next http.Handler) http.Handler {
 			return
 		}
 
-		token, _ := jwt.Parse(cookie.Value, func(t *jwt.Token) (interface{}, error) {
-			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("unexpected signing method: %v", t.Header)
-			}
+		claims, err := parseJWTToken(cookie.Value)
+		if err != nil {
+            http.Error(w, "access denied", http.StatusUnauthorized)
+            return
+        }
 
-			return []byte(os.Getenv("SECRET")), nil
-		})
-
-		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-			if float64(time.Now().Unix()) > claims["exp"].(float64) {
-				http.Error(w, "access denied", http.StatusUnauthorized)
-				return
-			}
-
-			var userName = claims["sub"].(string)
-			var usernameFromPath = r.PathValue("name")
-			user, err := u.store.GetUserByUsername(userName)
-			if user == nil || user.Username != usernameFromPath || err != nil {
-				http.Error(w, "access denied", http.StatusUnauthorized)
-				return
-			}
-
-			ctx := context.WithValue(r.Context(), "user", user)
-
-			next.ServeHTTP(w, r.WithContext(ctx))
-		} else {
+		if time.Now().Unix() > claims.ExpiresAt.Unix() {
 			http.Error(w, "access denied", http.StatusUnauthorized)
+			return
 		}
+
+		var userName = claims.Username
+		var usernameFromPath = r.PathValue("name")
+
+		user, err := u.store.GetUserByUsername(userName)
+		if user == nil || user.Username != usernameFromPath || err != nil {
+			http.Error(w, "access denied", http.StatusUnauthorized)
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), "user", user)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
