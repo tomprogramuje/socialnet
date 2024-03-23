@@ -42,6 +42,8 @@ func TestPostingSqueaksAndRetrievingThem(t *testing.T) {
 		`)
 		server.ServeHTTP(response, newPostSqueakRequest("Harrison", body))
 
+		assertStatus(t, response.Code, http.StatusUnauthorized)
+
 		body = []byte(`
 			{"text": "Laugh it up, fuzzball!"}	
 		`)
