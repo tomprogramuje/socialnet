@@ -76,19 +76,19 @@ func (s *PostgreSQLUserStore) CreateUser(username, email, password string) (int,
 	return id, nil
 }
 
-func (s *PostgreSQLUserStore) GetUserByID(id int) (string, error) {
-	query := `SELECT username FROM "user" WHERE id = $1`
+func (s *PostgreSQLUserStore) GetUserByID(id int) (*User, error) {
+	query := `SELECT * FROM "user" WHERE id = $1`
 
-	var name string
-	err := s.db.QueryRow(query, id).Scan(&name)
+	user := new(User)
+	err := s.db.QueryRow(query, id).Scan(&user.ID, &user.Username, &user.Email, &user.Password, &user.CreatedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return "", fmt.Errorf("user with id %d not found", id)
+			return nil, fmt.Errorf("user with id %d not found", id)
 		}
-		return "", fmt.Errorf("GetUserByID: %w", err)
+		return nil, fmt.Errorf("GetUserByID: %w", err)
 	}
 
-	return name, nil
+	return user, nil
 }
 
 func (s *PostgreSQLUserStore) GetUserByUsername(username string) (*User, error) {

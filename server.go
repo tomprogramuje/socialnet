@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -8,7 +9,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/golang-jwt/jwt/v5"
+	"github.com/golang-jwt/jwt/v4"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -20,7 +21,7 @@ type UserServer struct {
 type User struct {
 	ID        int          `json:"id"`
 	Username  string       `json:"username"`
-	Email     string       `json:"email"`
+	Email     string       `json:"email"` // email could use a validator
 	Password  string       `json:"password"`
 	Squeaks   []SqueakPost `json:"squeaks"`
 	CreatedAt time.Time    `json:"createdAt"`
@@ -40,7 +41,7 @@ func NewUserServer(store UserStore) *UserServer {
 	router := http.NewServeMux()
 	router.Handle("/userbase", http.HandlerFunc(u.userbaseHandler))
 	router.Handle("GET /users/{name}", http.HandlerFunc(u.showSqueaks))
-	router.Handle("POST /users/{name}", http.HandlerFunc(u.saveSqueak))
+	router.Handle("POST /users/{name}", u.requiresAuthentication(http.HandlerFunc(u.saveSqueak)))
 	router.Handle("/register", http.HandlerFunc(u.registerUser))
 	router.Handle("/login", http.HandlerFunc(u.loginUser))
 
@@ -55,6 +56,7 @@ type UserStore interface {
 	GetUserbase() ([]User, error)
 	CreateUser(name, email, password string) (int, error)
 	GetUserByUsername(username string) (*User, error)
+	GetUserByID(id int) (*User, error)
 }
 
 const jsonContentType = "application/json"
@@ -157,17 +159,14 @@ func (u *UserServer) loginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub": user.ID,
-		"exp": time.Now().Add(time.Hour * 24 * 30).Unix(),
-	})
+	loggedUser, _ := u.store.GetUserByUsername(username)
 
-	tokenString, err := token.SignedString([]byte(os.Getenv("SECRET")))
+	tokenString, err := generateJWTToken(loggedUser.Username)
 	if err != nil {
 		http.Error(w, "failed to create token", http.StatusBadRequest)
 	}
 
-	c := &http.Cookie{
+	cookie := &http.Cookie{
 		Name:     "Authorization",
 		Value:    tokenString,
 		MaxAge:   int(time.Hour * 24 * 30),
@@ -176,9 +175,20 @@ func (u *UserServer) loginUser(w http.ResponseWriter, r *http.Request) {
 		SameSite: http.SameSiteLaxMode,
 	}
 
-	http.SetCookie(w, c)
+	http.SetCookie(w, cookie)
 
 	w.WriteHeader(http.StatusAccepted)
+}
+
+func generateJWTToken(username string) (string, error) {
+	claims := &jwt.MapClaims{
+		"sub": username,
+		"exp": time.Now().Add(time.Hour * 24 * 30).Unix(),
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	return token.SignedString([]byte(os.Getenv("SECRET")))
 }
 
 func (u *UserServer) verifyCredentials(username, password string) bool {
@@ -194,4 +204,44 @@ func (u *UserServer) verifyCredentials(username, password string) bool {
 	}
 
 	return true
+}
+
+func (u *UserServer) requiresAuthentication(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		cookie, err := r.Cookie("Authorization")
+		if err != nil {
+			http.Error(w, "access denied", http.StatusUnauthorized)
+			return
+		}
+
+		token, _ := jwt.Parse(cookie.Value, func(t *jwt.Token) (interface{}, error) {
+			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", t.Header)
+			}
+
+			return []byte(os.Getenv("SECRET")), nil
+		})
+
+		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+			if float64(time.Now().Unix()) > claims["exp"].(float64) {
+				http.Error(w, "access denied", http.StatusUnauthorized)
+				return
+			}
+
+			var userName = claims["sub"].(string)
+			var usernameFromPath = r.PathValue("name")
+			user, err := u.store.GetUserByUsername(userName)
+			if user == nil || user.Username != usernameFromPath || err != nil {
+				http.Error(w, "access denied", http.StatusUnauthorized)
+				return
+			}
+
+			ctx := context.WithValue(r.Context(), "user", user)
+
+			next.ServeHTTP(w, r.WithContext(ctx))
+		} else {
+			http.Error(w, "access denied", http.StatusUnauthorized)
+		}
+	})
 }

@@ -38,7 +38,7 @@ func TestDatabase(t *testing.T) {
 		got, err := store.GetUserByID(id)
 		want := "Mark"
 
-		assertEqual(t, got, want)
+		assertEqual(t, got.Username, want)
 		assertNoError(t, err)
 	})
 	t.Run("returns not found for nonexisting user", func(t *testing.T) {

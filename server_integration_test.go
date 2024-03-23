@@ -17,6 +17,7 @@ func TestPostingSqueaksAndRetrievingThem(t *testing.T) {
 	initializeDatabase(db)
 	testStore := NewPostgreSQLUserStore(db)
 	server := NewUserServer(testStore)
+	var jwtToken string
 
 	t.Run("create new user Harrison", func(t *testing.T) {
 		body := []byte(`{
@@ -55,28 +56,40 @@ func TestPostingSqueaksAndRetrievingThem(t *testing.T) {
 		}`)
 		request, _ := http.NewRequest(http.MethodPost, "/login", bytes.NewBuffer(body))
 		response := httptest.NewRecorder()
-		
+
 		server.ServeHTTP(response, request)
 
 		assertStatus(t, response.Code, http.StatusAccepted)
 
-		token := response.Header().Get("Set-Cookie") // refactor
-
-		if token == "" {
-			t.Error("generated jwt is empty")
+		for _, cookie := range response.Result().Cookies() {
+			if cookie.Name == "Authorization" {
+				jwtToken = cookie.Value
+				break
+			}
 		}
+
+		if jwtToken == "" {
+			t.Error("JWT token not found in response cookies")
+		} 
 	})
 	t.Run("save squeaks for Harrison after successful login", func(t *testing.T) {
-		response := httptest.NewRecorder()
 		body := []byte(`
-		{"text": "Great, kid, don't get cocky."}	
+			{"text": "Great, kid, don't get cocky."}	
 		`)
-		server.ServeHTTP(response, newPostSqueakRequest("Harrison", body))
+		request, _ := http.NewRequest(http.MethodPost, "/users/Harrison", bytes.NewBuffer(body))
+		request.Header.Set("Cookie", "Authorization=" + jwtToken)
+		response := httptest.NewRecorder()
+
+		server.ServeHTTP(response, request)
 
 		body = []byte(`
 			{"text": "Laugh it up, fuzzball!"}	
 		`)
-		server.ServeHTTP(response, newPostSqueakRequest("Harrison", body))
+		request, _ = http.NewRequest(http.MethodPost, "/users/Harrison", bytes.NewBuffer(body))
+		request.Header.Set("Cookie", "Authorization=" + jwtToken)
+		response = httptest.NewRecorder()
+
+		server.ServeHTTP(response, request)
 
 		assertStatus(t, response.Code, http.StatusAccepted)
 	})

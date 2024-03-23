@@ -30,6 +30,17 @@ func (s *StubUserStore) GetUserByUsername(username string) (*User, error) {
 	return nil, fmt.Errorf("no user with that username (%s) found", username)
 }
 
+func (s *StubUserStore) GetUserByID(id int) (*User, error) {
+	var user *User
+	for i := range s.userbase {
+		if s.userbase[i].ID == id {
+			user = &s.userbase[i]
+			return user, nil
+		}
+	}
+	return nil, fmt.Errorf("no user with that id (%d) found", id)
+}
+
 func (s *StubUserStore) PostSqueak(username, squeak string) (int, error) {
 	user, err := s.GetUserByUsername(username)
 	if err != nil {
@@ -138,12 +149,19 @@ func TestStoreNewSqueaks(t *testing.T) {
 	}
 	server := NewUserServer(&store)
 
+	token, _ := generateJWTToken("Mark")
+
 	t.Run("it saves squeak on POST", func(t *testing.T) {
 		body := []byte(`{
 			"text": "Let go of your hate."
 		}`)
+		cookie := &http.Cookie{
+			Name:  "Authorization",
+			Value: token,
+		}
 
 		request := newPostSqueakRequest("Mark", body)
+		request.AddCookie(cookie)
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
