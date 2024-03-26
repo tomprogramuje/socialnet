@@ -2,17 +2,16 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
 	_ "github.com/lib/pq"
 )
 
-const connStrTest = "postgres://postgres:1234@localhost:5432/test?sslmode=disable"
-
 func TestDatabase(t *testing.T) {
 
-	db, err := NewPostgreSQLConnection(connStrTest)
+	db, err := NewPostgreSQLConnection(os.Getenv("CONN_STR_TEST"))
 	if err != nil {
 		t.Fatal(err)
 	}

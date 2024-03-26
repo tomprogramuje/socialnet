@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 )
 
 func TestPostingSqueaksAndRetrievingThem(t *testing.T) {
-	db, err := NewPostgreSQLConnection(connStrTest)
+	db, err := NewPostgreSQLConnection(os.Getenv("CONN_STR_TEST"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -72,7 +73,7 @@ func TestPostingSqueaksAndRetrievingThem(t *testing.T) {
 
 		if jwtToken == "" {
 			t.Error("JWT token not found in response cookies")
-		} 
+		}
 	})
 	t.Run("save squeaks for Harrison after successful login", func(t *testing.T) {
 		body := []byte(`
